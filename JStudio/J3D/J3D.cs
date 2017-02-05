@@ -47,7 +47,7 @@ namespace JStudio.J3D
             set { SetBoneAnimation(value.Name); }
         }
 
-        public BTK CurrentMateralAnimation
+        public BTK CurrentMaterialAnimation
         {
             get { return m_currentMaterialAnimation; }
             set { SetMaterialAnimation(value.Name); }
