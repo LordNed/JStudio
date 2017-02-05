@@ -6,8 +6,10 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using WArchiveTools;
 using WindEditor;
@@ -36,15 +38,21 @@ namespace JStudio.J3D
         public EVP1 EVP1Tag { get; private set; }
         public DRW1 DRW1Tag { get; private set; }
 
-        public List<BCK> BoneAnimations { get { return m_boneAnimations; } }
-        public List<BTK> MaterialAnimations { get { return m_materialAnimations; } }
+        public ObservableCollection<BCK> BoneAnimations { get { return m_boneAnimations; } }
+        public ObservableCollection<BTK> MaterialAnimations { get { return m_materialAnimations; } }
+
         public BCK CurrentBoneAnimation
         {
             get { return m_currentBoneAnimation; }
             set { SetBoneAnimation(value.Name); }
         }
 
-        private int m_totalFileSize;
+        public BTK CurrentMateralAnimation
+        {
+            get { return m_currentMaterialAnimation; }
+            set { SetMaterialAnimation(value.Name); }
+        }
+
 
         // Hack
         private Matrix4 m_viewMatrix;
@@ -58,11 +66,13 @@ namespace JStudio.J3D
 
         private Dictionary<string, Texture> m_textureOverrides;
         private Dictionary<string, bool> m_colorWriteOverrides;
-        private List<BCK> m_boneAnimations;
-        private List<BTK> m_materialAnimations;
+        private ObservableCollection<BCK> m_boneAnimations;
+        private ObservableCollection<BTK> m_materialAnimations;
+
         private BCK m_currentBoneAnimation;
         private BTK m_currentMaterialAnimation;
         private bool m_skinningInvalid;
+        private int m_totalFileSize;
 
         // To detect redundant calls
         private bool m_hasBeenDisposed = false;
@@ -90,8 +100,8 @@ namespace JStudio.J3D
             m_textureOverrides = new Dictionary<string, Texture>();
             m_colorWriteOverrides = new Dictionary<string, bool>();
             m_tevColorOverrides = new TevColorOverride();
-            m_boneAnimations = new List<BCK>();
-            m_materialAnimations = new List<BTK>();
+            m_boneAnimations = new ObservableCollection<BCK>();
+            m_materialAnimations = new ObservableCollection<BTK>();
 
             // Mark this as true when we first load so it moves non-animated pieces into the right area.
             m_skinningInvalid = true;
@@ -128,14 +138,11 @@ namespace JStudio.J3D
                 bck.LoadFromStream(reader);
 
             m_boneAnimations.Add(bck);
-
-            OnPropertyChanged("BoneAnimations");
         }
 
         public void UnloadBoneAnimations()
         {
             m_boneAnimations.Clear();
-            OnPropertyChanged("BoneAnimations");
         }
 
         public void LoadMaterialAnim(string btkFile)
@@ -147,19 +154,16 @@ namespace JStudio.J3D
                 btk.LoadFromStream(reader);
 
             m_materialAnimations.Add(btk);
-
-            OnPropertyChanged("MaterialAnimations");
         }
 
         public void UnloadMaterialAnimations()
         {
             m_materialAnimations.Clear();
-            OnPropertyChanged("MateiralAnimations");
         }
 
         public void SetBoneAnimation(string animName)
         {
-            BCK anim = m_boneAnimations.Find(x => x.Name == animName);
+            BCK anim = m_boneAnimations.FirstOrDefault(x => x.Name == animName);
             if (anim == null)
             {
                 Console.WriteLine("Failed to play animation {0}, animation not loaded!", animName);
@@ -174,12 +178,13 @@ namespace JStudio.J3D
                 m_currentBoneAnimation.Start();
             }
 
+            // The setter for CurrentBoneAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentBoneAnimation");
         }
 
         public void SetMaterialAnimation(string animName)
         {
-            BTK anim = m_materialAnimations.Find(x => x.Name == animName);
+            BTK anim = m_materialAnimations.FirstOrDefault(x => x.Name == animName);
             if (anim == null)
             {
                 Console.WriteLine("Failed to play animation {0}, animation not loaded!", animName);
@@ -194,6 +199,7 @@ namespace JStudio.J3D
                 m_currentMaterialAnimation.Start();
             }
 
+            // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentMaterialAnimation");
         }
 
