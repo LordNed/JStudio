@@ -44,13 +44,13 @@ namespace JStudio.J3D
         public BCK CurrentBoneAnimation
         {
             get { return m_currentBoneAnimation; }
-            set { SetBoneAnimation(value.Name); }
+            set { SetBoneAnimation(value != null ? value.Name : null); }
         }
 
         public BTK CurrentMaterialAnimation
         {
             get { return m_currentMaterialAnimation; }
-            set { SetMaterialAnimation(value.Name); }
+            set { SetMaterialAnimation(value != null ? value.Name : null); }
         }
 
 
@@ -453,6 +453,7 @@ namespace JStudio.J3D
                             finalMatrix = boneTransforms[indexFromDRW1];
                         }
 
+                        // Multiply the data from the model file by the finalMatrix to put it in the correct (skinned) position
                         transformedPositions.Add(Vector3.Transform(shape.VertexData.Position[i], finalMatrix));
 
                         if (shape.VertexData.Normal.Count > 0)
