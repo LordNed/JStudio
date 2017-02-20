@@ -9,8 +9,10 @@ namespace JStudio.J3D.Animation
 {
     public enum LoopType
     {
-        Once = 0,
-        Loop = 2
+        Once = 0, // 1 also plays once.
+        Loop = 2,
+        YoYo = 3, // Play once forward, then once backward.
+        YoYoLoop = 4, // Play forward, then backwards, then repeat.
     }
 
     public enum TangentType : ushort
