@@ -63,7 +63,7 @@ namespace JStudio.J3D.Animation
         public string Name { get; protected set; }
         public string Magic { get; protected set; }
         public string AnimType { get; protected set; }
-        public LoopType LoopMode { get; protected set; }
+        public LoopType LoopMode { get; set; }
         public short AnimLengthInFrames { get; protected set; }
 
         public string AnimLengthInSeconds { get { return string.Format("{0}s", (AnimLengthInFrames / kAnimFramerate).ToString("0.00")); } }
