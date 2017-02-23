@@ -77,6 +77,7 @@
     <Compile Include="JStudio\J3D\BinaryTextureImage.cs" />
     <Compile Include="JStudio\J3D\DRW1.cs" />
     <Compile Include="JStudio\J3D\EVP1.cs" />
+    <Compile Include="JStudio\J3D\ExternalTypes\BMT.cs" />
     <Compile Include="JStudio\J3D\INF1.cs" />
     <Compile Include="JStudio\J3D\J3D.cs" />
     <Compile Include="JStudio\J3D\JNT1.cs" />
