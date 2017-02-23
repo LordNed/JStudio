@@ -1,6 +1,7 @@
 ﻿using GameFormatReader.Common;
 using JStudio.J3D.Animation;
 using JStudio.J3D.ShaderGen;
+using JStudio.JStudio.J3D.ExternalTypes;
 using JStudio.OpenGL;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -41,6 +42,7 @@ namespace JStudio.J3D
         public ObservableCollection<BCK> BoneAnimations { get { return m_boneAnimations; } }
         public ObservableCollection<BTK> MaterialAnimations { get { return m_materialAnimations; } }
 
+        public ObservableCollection<BMT> ExternalMaterials { get { return m_externalMaterials; } }
         public BCK CurrentBoneAnimation
         {
             get { return m_currentBoneAnimation; }
@@ -51,6 +53,12 @@ namespace JStudio.J3D
         {
             get { return m_currentMaterialAnimation; }
             set { SetMaterialAnimation(value != null ? value.Name : null); }
+        }
+
+        public BMT CurrentExternalMaterial
+        {
+            get { return m_currentExternalMaterial; }
+            set { SetExternalMaterial(value != null ? value.Name : null); }
         }
 
 
@@ -68,9 +76,12 @@ namespace JStudio.J3D
         private Dictionary<string, bool> m_colorWriteOverrides;
         private ObservableCollection<BCK> m_boneAnimations;
         private ObservableCollection<BTK> m_materialAnimations;
+        private ObservableCollection<BMT> m_externalMaterials;
 
         private BCK m_currentBoneAnimation;
         private BTK m_currentMaterialAnimation;
+        private BMT m_currentExternalMaterial;
+
         private bool m_skinningInvalid;
         private int m_totalFileSize;
 
@@ -102,6 +113,7 @@ namespace JStudio.J3D
             m_tevColorOverrides = new TevColorOverride();
             m_boneAnimations = new ObservableCollection<BCK>();
             m_materialAnimations = new ObservableCollection<BTK>();
+            m_externalMaterials = new ObservableCollection<BMT>();
 
             // Mark this as true when we first load so it moves non-animated pieces into the right area.
             m_skinningInvalid = true;
@@ -140,11 +152,6 @@ namespace JStudio.J3D
             m_boneAnimations.Add(bck);
         }
 
-        public void UnloadBoneAnimations()
-        {
-            m_boneAnimations.Clear();
-        }
-
         public void LoadMaterialAnim(string btkFile)
         {
             string animName = Path.GetFileNameWithoutExtension(btkFile);
@@ -156,9 +163,36 @@ namespace JStudio.J3D
             m_materialAnimations.Add(btk);
         }
 
+        public void LoadExternalMaterial(string bmtFile)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(bmtFile);
+            BMT bmt = new BMT(fileName);
+
+            using (var reader = FileUtilities.LoadFile(bmtFile))
+                bmt.LoadFromStream(reader);
+
+            // Generate shaders for the loaded materials.
+            Material dummyMat = null;
+            AssignVertexAttributesToMaterialsRecursive(INF1Tag.HierarchyRoot, ref dummyMat, bmt.MAT3);
+
+            // Now that the vertex attributes are assigned to the materials, generate a shader from the data.
+            GenerateShadersForMaterials(bmt.MAT3, false);
+
+            m_externalMaterials.Add(bmt);
+        }
+
         public void UnloadMaterialAnimations()
         {
             m_materialAnimations.Clear();
+        }
+        public void UnloadBoneAnimations()
+        {
+            m_boneAnimations.Clear();
+        }
+
+        public void UnloadExternalMaterials()
+        {
+            m_externalMaterials.Clear();
         }
 
         public void SetBoneAnimation(string animName)
@@ -201,6 +235,23 @@ namespace JStudio.J3D
 
             // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentMaterialAnimation");
+        }
+
+        public void SetExternalMaterial(string bmtName)
+        {
+            BMT extMat = m_externalMaterials.FirstOrDefault(x => x.Name == bmtName);
+            if (extMat == null)
+            {
+                Console.WriteLine("Failed to play external material {0}, external material not loaded!", bmtName);
+            }
+
+            if(extMat != null)
+            {
+                m_currentExternalMaterial = extMat;
+            }
+
+            // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
+            OnPropertyChanged("CurrentExternalMaterial");
         }
 
         /// <summary>
@@ -284,7 +335,7 @@ namespace JStudio.J3D
                     // MATERIAL - Stores materials (which describes how textures, etc. are drawn)
                     case "MAT3":
                         MAT3Tag = new MAT3();
-                        MAT3Tag.LoadMAT3FromStream(reader, tagStart, tagSize);
+                        MAT3Tag.LoadMAT3FromStream(reader, tagStart);
                         break;
                     // TEXTURES - Stores binary texture images.
                     case "TEX1":
@@ -306,26 +357,10 @@ namespace JStudio.J3D
             // To resolve, we iterate once through the hierarchy to see which mesh is called after a material and bind the
             // vertex descriptions.
             Material dummyMat = null;
-            AssignVertexAttributesToMaterialsRecursive(INF1Tag.HierarchyRoot, ref dummyMat);
+            AssignVertexAttributesToMaterialsRecursive(INF1Tag.HierarchyRoot, ref dummyMat, MAT3Tag);
 
             // Now that the vertex attributes are assigned to the materials, generate a shader from the data.
-            foreach (var material in MAT3Tag.MaterialList)
-            {
-                if (material.VtxDesc == null)
-                {
-                    Console.WriteLine("Skipping generating Shader for Unreferenced Material: {0}", material);
-                    continue;
-                }
-                material.Shader = TEVShaderGenerator.GenerateShader(material, MAT3Tag, dumpShaders);
-
-                // Bind the Light Block uniform to the shader
-                GL.BindBufferBase(BufferRangeTarget.UniformBuffer, (int)ShaderUniformBlockIds.LightBlock, m_hardwareLightBuffer);
-                GL.UniformBlockBinding(material.Shader.Program, material.Shader.UniformLightBlock, (int)ShaderUniformBlockIds.LightBlock);
-
-                // Bind the Pixel Shader uniform to the shader
-                GL.BindBufferBase(BufferRangeTarget.UniformBuffer, (int)ShaderUniformBlockIds.PixelShaderBlock, material.Shader.PSBlockUBO);
-                GL.UniformBlockBinding(material.Shader.Program, material.Shader.UniformPSBlock, (int)ShaderUniformBlockIds.PixelShaderBlock);
-            }
+            GenerateShadersForMaterials(MAT3Tag, dumpShaders);
 
             // Iterate through the shapes and calculate a bounding box which encompasses all of them.
             Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
@@ -356,16 +391,37 @@ namespace JStudio.J3D
             BoundingSphere = new FSphere(BoundingBox.Center, BoundingBox.Max.Length);
         }
 
-        private void AssignVertexAttributesToMaterialsRecursive(HierarchyNode curNode, ref Material curMaterial)
+        private void GenerateShadersForMaterials(MAT3 mat3Tag, bool dumpShaders = false)
+        {
+            foreach (var material in mat3Tag.MaterialList)
+            {
+                if (material.VtxDesc == null)
+                {
+                    Console.WriteLine("Skipping generating Shader for Unreferenced Material: {0}", material);
+                    continue;
+                }
+                material.Shader = TEVShaderGenerator.GenerateShader(material, mat3Tag, dumpShaders);
+
+                // Bind the Light Block uniform to the shader
+                GL.BindBufferBase(BufferRangeTarget.UniformBuffer, (int)ShaderUniformBlockIds.LightBlock, m_hardwareLightBuffer);
+                GL.UniformBlockBinding(material.Shader.Program, material.Shader.UniformLightBlock, (int)ShaderUniformBlockIds.LightBlock);
+
+                // Bind the Pixel Shader uniform to the shader
+                GL.BindBufferBase(BufferRangeTarget.UniformBuffer, (int)ShaderUniformBlockIds.PixelShaderBlock, material.Shader.PSBlockUBO);
+                GL.UniformBlockBinding(material.Shader.Program, material.Shader.UniformPSBlock, (int)ShaderUniformBlockIds.PixelShaderBlock);
+            }
+        }
+
+        private void AssignVertexAttributesToMaterialsRecursive(HierarchyNode curNode, ref Material curMaterial, MAT3 matTag)
         {
             switch (curNode.Type)
             {
-                case HierarchyDataType.Material: curMaterial = MAT3Tag.MaterialList[MAT3Tag.MaterialRemapTable[curNode.Value]]; break;
+                case HierarchyDataType.Material: curMaterial = matTag.MaterialList[matTag.MaterialRemapTable[curNode.Value]]; break;
                 case HierarchyDataType.Batch: curMaterial.VtxDesc = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[curNode.Value]].VertexDescription; break;
             }
 
             foreach (var child in curNode.Children)
-                AssignVertexAttributesToMaterialsRecursive(child, ref curMaterial);
+                AssignVertexAttributesToMaterialsRecursive(child, ref curMaterial, matTag);
         }
 
         public void Tick(float deltaTime)
@@ -547,12 +603,15 @@ namespace JStudio.J3D
 
         private void BindMaterialByIndex(ushort index)
         {
+            MAT3 mat3 = m_currentExternalMaterial != null ? m_currentExternalMaterial.MAT3 : MAT3Tag;
+            TEX1 tex1 = m_currentExternalMaterial != null ? m_currentExternalMaterial.TEX1 : TEX1Tag;
+
             // While the game collapses duplicate materials via the material index remap table,
             // the actual original names are preserved with their original indexes through the
             // string table.
-            string materialName = MAT3Tag.MaterialNameTable[index];
+            string materialName = mat3.MaterialNameTable[index];
 
-            Material material = MAT3Tag.MaterialList[MAT3Tag.MaterialRemapTable[index]];
+            Material material = mat3.MaterialList[mat3.MaterialRemapTable[index]];
             material.Bind();
             m_currentBoundMat = material;
 
@@ -568,7 +627,7 @@ namespace JStudio.J3D
                 if (idx < 0) continue;
 
                 //int glTextureIndex = GL.GetUniformLocation(shader.Program, string.Format("Texture[{0}]", i));
-                Texture tex = TEX1Tag.Textures[MAT3Tag.TextureRemapTable[idx]];
+                Texture tex = tex1.Textures[mat3.TextureRemapTable[idx]];
 
                 // Before we bind the texture, we need to check if this particular texture has been overriden.
                 // This allows textures to be replaced on a per-name basis with another file. Used in cases of
@@ -681,26 +740,31 @@ namespace JStudio.J3D
 
         public void DrawBoundsForJoints(bool boundingBox, bool boundingSphere, IDebugLineDrawer lineDrawer)
         {
-            Matrix4[] boneTransforms = new Matrix4[JNT1Tag.BindJoints.Count];
-            for (int i = 0; i < JNT1Tag.BindJoints.Count; i++)
+            IList<SkeletonJoint> boneList = (m_currentBoneAnimation != null) ? JNT1Tag.AnimatedJoints : JNT1Tag.BindJoints;
+
+            Matrix4[] boneTransforms = new Matrix4[boneList.Count];
+            ApplyBonePositionsToAnimationTransforms(boneList, boneTransforms);
+
+            for (int i = 0; i < boneTransforms.Length; i++)
             {
                 SkeletonJoint curJoint, origJoint;
                 curJoint = origJoint = JNT1Tag.BindJoints[i];
 
-                Matrix4 cumulativeTransform = Matrix4.Identity;
-                while (true)
-                {
-                    Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
-                    cumulativeTransform *= jointMatrix;
-                    if (curJoint.Parent == null)
-                        break;
+                //Matrix4 cumulativeTransform = Matrix4.Identity;
+                //while (true)
+                //{
+                //    Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
+                //    cumulativeTransform *= jointMatrix;
+                //    if (curJoint.Parent == null)
+                //        break;
 
-                    curJoint = curJoint.Parent;
-                }
+                //    curJoint = curJoint.Parent;
+                //}
 
-                boneTransforms[i] = cumulativeTransform;
-                Vector3 curPos = cumulativeTransform.ExtractTranslation();
-                Quaternion curRot = cumulativeTransform.ExtractRotation();
+                //boneTransforms[i] = cumulativeTransform;
+                boneTransforms[i].Transpose();
+                Vector3 curPos = boneTransforms[i].ExtractTranslation();
+                Quaternion curRot = boneTransforms[i].ExtractRotation();
 
                 WLinearColor jointColor = origJoint.Unknown1 == 0 ? WLinearColor.Yellow : WLinearColor.Blue;
                 if (boundingSphere)
