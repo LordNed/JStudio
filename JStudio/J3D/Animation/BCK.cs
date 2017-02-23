@@ -92,6 +92,9 @@ namespace JStudio.J3D.Animation
                     default:
                         Console.WriteLine("Unsupported section in BCK File: {0}", tagName); break;
                 }
+
+                // Skip the stream reader to the start of the next tag since it gets moved around during loading.
+                reader.BaseStream.Position = tagStart + tagSize;
             }
         }
 

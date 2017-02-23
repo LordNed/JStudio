@@ -195,6 +195,9 @@ namespace JStudio.J3D.Animation
                         }
                         break;
                 }
+
+                // Skip the stream reader to the start of the next tag since it gets moved around during loading.
+                reader.BaseStream.Position = tagStart + tagSize;
             }
         }
     }
