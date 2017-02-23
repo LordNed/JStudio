@@ -93,7 +93,7 @@ namespace JStudio.J3D
         /// <param name="stream">The stream to decode the instance from</param>
         private delegate T LoadTypeFromStream<T>(EndianBinaryReader stream);
 
-        internal void LoadMAT3FromStream(EndianBinaryReader reader, long chunkStart, int chunkSize)
+        internal void LoadMAT3FromStream(EndianBinaryReader reader, long chunkStart)
         {
             short materialCount = reader.ReadInt16();
             Trace.Assert(reader.ReadUInt16() == 0xFFFF); // Padding
@@ -166,7 +166,10 @@ namespace JStudio.J3D
             //TexMatrix2Infos = ReadSection<TexMatrix>(reader, chunkStart, chunkSize, offsets, 14, ReadTexMatrix, 100);
 
             /* TEXURE INDEX */
-            TextureRemapTable = ReadSection<short>(reader, chunkStart, chunkSize, offsets, 15, ReadShort, 2);
+            TextureRemapTable = new List<short>();
+            for (int i = 0; i < 8; i++)
+                TextureRemapTable.Add(ReadEntry(reader, ReadShort, chunkStart, offsets, 15, i, 2));
+            //TextureRemapTable = ReadSection<short>(reader, chunkStart, chunkSize, offsets, 15, ReadShort, 2);
 
             /* TEV ORDER INFO */
             //TevOrderInfos = ReadSection<TevOrder>(reader, chunkStart, chunkSize, offsets, 16, ReadTevOrder, 4);
