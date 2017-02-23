@@ -224,20 +224,23 @@ namespace JStudio.J3D
 
         public void SetMaterialAnimation(string animName)
         {
-            BTK anim = m_materialAnimations.FirstOrDefault(x => x.Name == animName);
-            if (anim == null)
+            BTK anim = null;
+            if (!string.IsNullOrEmpty(animName))
             {
-                Console.WriteLine("Failed to play animation {0}, animation not loaded!", animName);
+                anim = m_materialAnimations.FirstOrDefault(x => x.Name == animName);
+                if (anim == null)
+                {
+                    Console.WriteLine("Failed to play animation {0}, animation not loaded!", animName);
+                }
             }
 
             if (m_currentMaterialAnimation != null)
                 m_currentMaterialAnimation.Stop();
 
-            if (anim != null)
-            {
-                m_currentMaterialAnimation = anim;
+            m_currentMaterialAnimation = anim;
+
+            if (m_currentMaterialAnimation != null)
                 m_currentMaterialAnimation.Start();
-            }
 
             // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentMaterialAnimation");
@@ -245,16 +248,17 @@ namespace JStudio.J3D
 
         public void SetExternalMaterial(string bmtName)
         {
-            BMT extMat = m_externalMaterials.FirstOrDefault(x => x.Name == bmtName);
-            if (extMat == null)
+            BMT extMat = null;
+            if (!string.IsNullOrEmpty(bmtName))
             {
-                Console.WriteLine("Failed to play external material {0}, external material not loaded!", bmtName);
+                extMat = m_externalMaterials.FirstOrDefault(x => x.Name == bmtName);
+                if (extMat == null)
+                {
+                    Console.WriteLine("Failed to play external material {0}, external material not loaded!", bmtName);
+                }
             }
 
-            if(extMat != null)
-            {
-                m_currentExternalMaterial = extMat;
-            }
+            m_currentExternalMaterial = extMat;
 
             // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentExternalMaterial");
