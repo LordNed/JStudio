@@ -920,6 +920,9 @@ namespace JStudio.J3D
                     foreach (var material in MAT3Tag.MaterialList)
                         if(material.Shader != null)
                             material.Shader.Dispose();
+
+                    foreach (var externalMaterial in m_externalMaterials)
+                        externalMaterial.Dispose();
                 }
 
                 GL.DeleteBuffer(m_hardwareLightBuffer);
@@ -938,6 +941,7 @@ namespace JStudio.J3D
                 m_materialAnimations = null;
                 m_tevColorOverrides = null;
                 m_textureOverrides = null;
+                m_externalMaterials = null;
 
                 m_hasBeenDisposed = true;
             }

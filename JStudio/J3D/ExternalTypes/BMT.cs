@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace JStudio.JStudio.J3D.ExternalTypes
 {
-    public class BMT
+    public class BMT : IDisposable
     {
         public string Name { get; private set; }
         public string Magic { get; private set; }
@@ -79,5 +79,44 @@ namespace JStudio.JStudio.J3D.ExternalTypes
             m_tex1Section = new TEX1();
             m_tex1Section.LoadTEX1FromStream(reader, tagStart, false);
         }
+
+        #region IDisposable Support
+        // To detect redundant calls
+        private bool m_hasBeenDisposed = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!m_hasBeenDisposed)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects).
+                    foreach (var texture in TEX1.Textures)
+                        texture.Dispose();
+
+                    foreach (var material in MAT3.MaterialList)
+                        if (material.Shader != null)
+                            material.Shader.Dispose();
+                }
+
+                m_hasBeenDisposed = true;
+            }
+        }
+
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        ~BMT()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(false);
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }
