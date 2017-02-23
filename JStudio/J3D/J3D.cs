@@ -197,20 +197,26 @@ namespace JStudio.J3D
 
         public void SetBoneAnimation(string animName)
         {
-            BCK anim = m_boneAnimations.FirstOrDefault(x => x.Name == animName);
-            if (anim == null)
+            BCK anim = null;
+            if (!string.IsNullOrEmpty(animName))
             {
-                Console.WriteLine("Failed to play animation {0}, animation not loaded!", animName);
+                anim = m_boneAnimations.FirstOrDefault(x => x.Name == animName);
+                if (anim == null)
+                {
+                    Console.WriteLine("Failed to play animation {0}, animation not loaded!", animName);
+                }
             }
 
             if (m_currentBoneAnimation != null)
                 m_currentBoneAnimation.Stop();
 
-            if (anim != null)
-            {
-                m_currentBoneAnimation = anim;
+            m_currentBoneAnimation = anim;
+
+            if (m_currentBoneAnimation != null)
                 m_currentBoneAnimation.Start();
-            }
+
+            // We set this to true so that when we unload an animation it marks us as invalid for one frame so it updates our GPU mesh back to T-pose.
+            m_skinningInvalid = true;
 
             // The setter for CurrentBoneAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentBoneAnimation");
