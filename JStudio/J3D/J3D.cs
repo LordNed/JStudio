@@ -674,7 +674,7 @@ namespace JStudio.J3D
 
             // Set the OpenGL State
             GXToOpenGL.SetBlendState(material.BlendModeIndex);
-            GXToOpenGL.SetCullState(material.CullModeIndex);
+            GXToOpenGL.SetCullState(material.CullMode);
             GXToOpenGL.SetDepthState(material.ZModeIndex);
             GXToOpenGL.SetDitherEnabled(material.DitherIndex);
 

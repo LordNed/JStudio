@@ -3,18 +3,21 @@ using JStudio.OpenGL;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using WindEditor;
 
 namespace JStudio.J3D
 {
-    public class Material
+    public class Material : INotifyPropertyChanged
     {
-        public string Name { get; internal set; }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string Name { get { return m_name; } set { m_name = value; OnPropertyChanged(); }}
         public Shader Shader { get; internal set; }
         public VertexDescription VtxDesc { get; internal set; }
 
-        public byte Flag { get; internal set; }
-        public GXCullMode CullModeIndex { get; internal set; }
+        public byte Flag { get { return m_flag; } set { m_flag = value; OnPropertyChanged(); }}
+        public GXCullMode CullMode { get { return m_cullMode; } set { m_cullMode = value; OnPropertyChanged(); } }
         public byte NumChannelControlsIndex { get; internal set; }
         public byte NumTexGensIndex { get; internal set; }
         public byte NumTevStages { get; internal set; }
@@ -44,6 +47,11 @@ namespace JStudio.J3D
         public BlendMode BlendModeIndex { get; internal set; }
         public NBTScale UnknownIndex2 { get; internal set; } // Tentatively named NBTScale
 
+
+        private string m_name;
+        private byte m_flag;
+        private GXCullMode m_cullMode;
+
         public void Bind()
         {
             Shader.Bind();
@@ -52,6 +60,11 @@ namespace JStudio.J3D
         public override string ToString()
         {
             return Name;
+        }
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 
@@ -233,7 +246,7 @@ namespace JStudio.J3D
 
                 material.Name = MaterialNameTable[m];
                 material.Flag = flag;
-                material.CullModeIndex = ReadEntry(reader, ReadCullMode, chunkStart, offsets, 4, reader.ReadByte(), 4);
+                material.CullMode = ReadEntry(reader, ReadCullMode, chunkStart, offsets, 4, reader.ReadByte(), 4);
                 material.NumChannelControlsIndex = ReadEntry(reader, ReadByte, chunkStart, offsets, 6, reader.ReadByte(), 1);
                 material.NumTexGensIndex = ReadEntry(reader, ReadByte, chunkStart, offsets, 10, reader.ReadByte(), 1);
                 material.NumTevStages = ReadEntry(reader, ReadByte, chunkStart, offsets, 19, reader.ReadByte(), 1);
