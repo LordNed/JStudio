@@ -73,34 +73,7 @@ namespace JStudio.J3D
         public BindingList<Material> MaterialList { get; protected set; }
         public List<short> MaterialRemapTable { get; protected set; }
         public StringTable MaterialNameTable { get; protected set; }
-        //public List<IndirectTexture> IndirectTextures { get; protected set; }
-        //public List<GXCullMode> CullModes { get; protected set; }
-        //public List<WLinearColor> MaterialColors { get; protected set; }
-        //public List<byte> NumChannelControls { get; protected set; }
-        //public List<ColorChannelControl> ColorChannelControls { get; protected set; }
-        //public List<WLinearColor> AmbientColors { get; protected set; }
-        //public List<WLinearColor> LightingColors { get; protected set; }
-        //public List<byte> NumTexGens { get; protected set; }
-        //public List<TexCoordGen> TexGenInfos { get; protected set; }
-        //public List<TexCoordGen> TexGen2Infos { get; protected set; }
-        //public List<TexMatrix> TexMatrixInfos { get; protected set; }
-        //public List<TexMatrix> TexMatrix2Infos { get; protected set; }
         public List<short> TextureRemapTable { get; protected set; }
-        //public List<TevOrder> TevOrderInfos { get; protected set; }
-        //public List<WLinearColor> TevColors { get; protected set; }
-        //public List<WLinearColor> TevKonstColors { get; protected set; }
-        //public List<byte> NumTevStages { get; protected set; }
-        //public List<TevStage> TevStageInfos { get; protected set; }
-        //public List<TevSwapMode> TevSwapModeInfos { get; protected set; }
-        //public List<TevSwapModeTable> TevSwapModeTables { get; protected set; }
-        //public List<FogInfo> FogInfos { get; protected set; }
-        //public List<AlphaCompare> AlphaCompares { get; protected set; }
-        //public List<BlendMode> BlendModeInfos { get; protected set; }
-        //public List<ZMode> ZModeInfos { get; protected set; }
-        //public List<bool> ZCompareLocInfo { get; protected set; }
-        //public List<bool> DitherInfos { get; protected set; }
-        //public List<NBTScale> NBTScale { get; protected set; }
-
 
         /// <summary> Delegate defines a function that decodes one instance of type T.</summary>
         /// <param name="stream">The stream to decode the instance from</param>
@@ -139,96 +112,11 @@ namespace JStudio.J3D
             // Unknowns:
             // Indirect Textures don't have an index from the Material
             // NBTSCale doesn't have a known index from the Material.
-
-            /* INDIRECT TEXTURING */
-            //IndirectTextures = ReadSection<IndirectTexture>(reader, chunkStart, chunkSize, offsets, 3, ReadIndirectTexture, 312);
-
-            /* CULL MODE */
-            //CullModes = ReadSection<GXCullMode>(reader, chunkStart, chunkSize, offsets, 4, ReadCullMode, 4);
-
-            /* MATERIAL COLOR */
-            //MaterialColors = ReadSection<WLinearColor>(reader, chunkStart, chunkSize, offsets, 5, ReadColor32, 4);
-
-            /* NUM COLOR CHAN */
-            // THIS IS A GUESS AT DATA TYPE
-            //NumChannelControls = ReadSection<byte>(reader, chunkStart, chunkSize, offsets, 6, ReadByte, 1);
-
-            /* COLOR CHAN INFO */
-            //ColorChannelControls = ReadSection<ColorChannelControl>(reader, chunkStart, chunkSize, offsets, 7, ReadChannelControl, 8);
-
-            /* AMBIENT COLOR */
-            //AmbientColors = ReadSection<WLinearColor>(reader, chunkStart, chunkSize, offsets, 8, ReadColor32, 4);
-
-            /* LIGHT INFO */
-            // THIS IS A GUESS AT DATA TYPE
-            //LightingColors = ReadSection<WLinearColor>(reader, chunkStart, chunkSize, offsets, 9, ReadColorShort, 8);
-
-            /* TEX GEN NUMBER */
-            //NumTexGens = ReadSection<byte>(reader, chunkStart, chunkSize, offsets, 10, ReadByte, 1);
-
-            /* TEX GEN INFO */
-            //TexGenInfos = ReadSection<TexCoordGen>(reader, chunkStart, chunkSize, offsets, 11, ReadTexCoordGen, 4);
-
-            /* TEX GEN 2 INFO */
-            //TexGen2Infos = ReadSection<TexCoordGen>(reader, chunkStart, chunkSize, offsets, 12, ReadTexCoordGen, 4);
-
-            /* TEX MATRIX INFO */
-            //TexMatrixInfos = ReadSection<TexMatrix>(reader, chunkStart, chunkSize, offsets, 13, ReadTexMatrix, 100);
-
-            /* POST TRANSFORM MATRIX INFO */
-            //TexMatrix2Infos = ReadSection<TexMatrix>(reader, chunkStart, chunkSize, offsets, 14, ReadTexMatrix, 100);
-
-            /* TEXURE INDEX */
+            
             TextureRemapTable = new List<short>();
             for (int i = 0; i < 8; i++)
                 TextureRemapTable.Add(ReadEntry(reader, ReadShort, chunkStart, offsets, 15, i, 2));
-            //TextureRemapTable = ReadSection<short>(reader, chunkStart, chunkSize, offsets, 15, ReadShort, 2);
-
-            /* TEV ORDER INFO */
-            //TevOrderInfos = ReadSection<TevOrder>(reader, chunkStart, chunkSize, offsets, 16, ReadTevOrder, 4);
-
-            /* TEV COLORS */
-            //TevColors = ReadSection<WLinearColor>(reader, chunkStart, chunkSize, offsets, 17, ReadColorShort, 8);
-
-            /* TEV KONST COLORS */
-            //var TevKonstColors = ReadSection<WLinearColor>(reader, chunkStart, chunkSize, offsets, 18, ReadColor32, 4);
-
-            /* NUM TEV STAGES */
-            // THIS IS A GUESS AT DATA TYPE
-            //NumTevStages = ReadSection<byte>(reader, chunkStart, chunkSize, offsets, 19, ReadByte, 1);
-
-            /* TEV STAGE INFO */
-            //TevStageInfos = ReadSection<TevStage>(reader, chunkStart, chunkSize, offsets, 20, ReadTevCombinerStage, 20);
-
-            /* TEV SWAP MODE INFO */
-            //TevSwapModeInfos = ReadSection<TevSwapMode>(reader, chunkStart, chunkSize, offsets, 21, ReadTevSwapMode, 4);
-
-            /* TEV SWAP MODE TABLE INFO */
-            //TevSwapModeTables = ReadSection<TevSwapModeTable>(reader, chunkStart, chunkSize, offsets, 22, ReadTevSwapModeTable, 4);
-
-            /* FOG INFO */
-            //FogInfos = ReadSection<FogInfo>(reader, chunkStart, chunkSize, offsets, 23, ReadFogInfo, 44);
-
-            /* ALPHA COMPARE INFO */
-            //AlphaCompares = ReadSection<AlphaCompare>(reader, chunkStart, chunkSize, offsets, 24, ReadAlphaCompare, 8);
-
-            /* BLEND INFO */
-            //BlendModeInfos = ReadSection<BlendMode>(reader, chunkStart, chunkSize, offsets, 25, ReadBlendMode, 4);
-
-            /* ZMODE INFO */
-            //ZModeInfos = ReadSection<ZMode>(reader, chunkStart, chunkSize, offsets, 26, ReadZMode, 4);
-
-            /* ZCOMP LOC INFO */
-            // THIS IS A GUESS AT DATA TYPE
-            //ZCompareLocInfo = ReadSection<bool>(reader, chunkStart, chunkSize, offsets, 27, ReadBool, 1);
-
-            /* DITHER INFO */
-            // THIS IS A GUESS AT DATA TYPE
-            //DitherInfos = ReadSection<bool>(reader, chunkStart, chunkSize, offsets, 28, ReadBool, 1);
-
-            /* NBT SCALE INFO */
-            //NBTScale = ReadSection<NBTScale>(reader, chunkStart, chunkSize, offsets, 29, ReadNBTScale, 16);
-
+            
             for (int m = 0; m < highestMaterialCount; m++)
             {
                 // A Material entry is 0x14c long.
@@ -375,7 +263,6 @@ namespace JStudio.J3D
                 material.FogModeIndex = ReadEntry(reader, ReadFogInfo, chunkStart, offsets, 23, reader.ReadInt16(), 44);
                 material.AlphaTest = ReadEntry(reader, ReadAlphaCompare, chunkStart, offsets, 24, reader.ReadInt16(), 8);
                 material.BlendModeIndex = ReadEntry(reader, ReadBlendMode, chunkStart, offsets, 25, reader.ReadInt16(), 4);
-                //material.UnknownIndex2 = ReadEntry(reader, ReadBlendMode, chunkStart, offsets, 25, reader.ReadInt16(), 4);
                 material.UnknownIndex2 = ReadEntry(reader, ReadNBTScale, chunkStart, offsets, 29, reader.ReadInt16(), 16);
             }
         }
