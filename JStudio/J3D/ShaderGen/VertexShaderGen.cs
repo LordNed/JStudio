@@ -37,7 +37,7 @@ namespace JStudio.J3D.ShaderGen
 
             // TEV uses up to 4 channels to accumulate the result of Per-Vertex Lighting/Material/Ambient lighting.
             // Color0, Alpha0, Color1, and Alpha1 are the four possible channel names.
-            stream.AppendFormat("// NumChannelControls: {0}\n", mat.NumChannelControlsIndex);
+            stream.AppendFormat("// NumChannelControls: {0}\n", mat.NumChannelControls);
             stream.AppendFormat("out vec4 colors_0;\n");
             stream.AppendFormat("out vec4 colors_1;\n");
             stream.AppendLine();
@@ -90,7 +90,7 @@ namespace JStudio.J3D.ShaderGen
             stream.AppendLine();
 
             // Do Color Channel Fixups
-            if(mat.NumChannelControlsIndex < 2)
+            if(mat.NumChannelControls < 2)
             {
                 if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Color1))
                     stream.AppendFormat("\tcolors_1 = RawColor1;\n");
@@ -120,10 +120,10 @@ namespace JStudio.J3D.ShaderGen
                 stream.AppendLine("\tvec3 _norm0 = vec3(0.0, 0.0, 0.0);");
 
 
-            stream.AppendFormat("\t// {0} Channel Controller(s).\n", mat.NumChannelControlsIndex);
-            for (int i = 0; i < mat.NumChannelControlsIndex; i++)
+            stream.AppendFormat("\t// {0} Channel Controller(s).\n", mat.NumChannelControls);
+            for (int i = 0; i < mat.NumChannelControls; i++)
             {
-                ColorChannelControl channelControl = mat.ColorChannelControlIndexes[i];
+                ColorChannelControl channelControl = mat.ColorChannelControls[i];
                 stream.AppendFormat("\t// Channel Control: {0} - LightingEnabled: {1} MaterialSrc: {2} LightMask: {3} DiffuseFn: {4} AttenuationFn: {5} AmbientSrc: {6}\n",
                     i, channelControl.LightingEnabled, channelControl.MaterialSrc, channelControl.LitMask, channelControl.DiffuseFunction, channelControl.AttenuationFunction, channelControl.AmbientSrc);
 
@@ -164,7 +164,7 @@ namespace JStudio.J3D.ShaderGen
 
                 // Not sure if this is right, but if a single color channel is enabled then the alpha component of color_0 never gets assigned
                 // and then something tries to use it and it's empty instead of being the ambSrc/matSrc alpha.
-                if (mat.NumChannelControlsIndex == 1 || mat.NumChannelControlsIndex == 3)
+                if (mat.NumChannelControls == 1 || mat.NumChannelControls == 3)
                 {
                     // ToDo: https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/LightingShaderGen.h#L184 looks like a better implementation
                     stream.AppendLine("\t// Doing an unknown fixup. There's only one color channel enabled, so we never write to the alpha of the color_*, and thus it never gets initialized.");

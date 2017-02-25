@@ -1,5 +1,7 @@
 ﻿using OpenTK;
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using WindEditor;
 
 namespace JStudio.J3D
@@ -423,25 +425,39 @@ namespace JStudio.J3D
     /// The <see cref="ColorChannelControl.DiffuseFunction"/> and <see cref="ColorChannelControl.AttenuationFunction"/> parameters control the lighting equation for all lights associated with this channel.
     /// The <see cref="ColorChannelControl.AmbientSrc"/> and <see cref="ColorChannelControl.MaterialSrc"/> used to select whether the input source colors come from the register colors or vertex colors.
     /// </summary>
-    public class ColorChannelControl
+    public class ColorChannelControl : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         /// <summary> Whether or not to enable lighting for this channel. If false, the material source color is passed through as the material output color.</summary>
-        public bool LightingEnabled;
+        public bool LightingEnabled { get { return m_lightingEnabled; } set { m_lightingEnabled = value; OnPropertyChanged(); } }
 
         /// <summary> Source for the Material color. When set to <see cref="GXColorSrc.Register"/> the color set by GX_SetChanMatColor is used. </summary>
-        public GXColorSrc MaterialSrc;
+        public GXColorSrc MaterialSrc { get { return m_materialSrc; } set { m_materialSrc = value; OnPropertyChanged(); } }
 
         /// <summary> Light ID or IDs to associate with this channel. </summary>
-        public GXLightMask LitMask;
+        public GXLightMask LitMask { get { return m_litMask; } set { m_litMask = value; OnPropertyChanged(); } }
 
         /// <summary> Diffuse function to use. </summary>
-        public GXDiffuseFunction DiffuseFunction;
+        public GXDiffuseFunction DiffuseFunction { get { return m_diffuseFunction; } set { m_diffuseFunction = value; OnPropertyChanged(); } }
 
         /// <summary> Attenuation function to use. </summary>
-        public GXAttenuationFunction AttenuationFunction;
+        public GXAttenuationFunction AttenuationFunction { get { return m_attenuationFunction; } set { m_attenuationFunction = value; OnPropertyChanged(); } }
 
         /// <summary> Source for the ambient color. When set to <see cref="GXColorSrc.Register"/> the color set by GX_SetChanAmbColor is used. </summary>
-        public GXColorSrc AmbientSrc;
+        public GXColorSrc AmbientSrc { get { return m_ambientSrc; } set { m_ambientSrc = value; OnPropertyChanged(); } }
+
+        private bool m_lightingEnabled;
+        private GXColorSrc m_materialSrc;
+        private GXLightMask m_litMask;
+        private GXDiffuseFunction m_diffuseFunction;
+        private GXAttenuationFunction m_attenuationFunction;
+        private GXColorSrc m_ambientSrc;
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     /// <summary>

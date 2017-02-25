@@ -18,14 +18,14 @@ namespace JStudio.J3D
 
         public byte Flag { get { return m_flag; } set { m_flag = value; OnPropertyChanged(); }}
         public GXCullMode CullMode { get { return m_cullMode; } set { m_cullMode = value; OnPropertyChanged(); } }
-        public byte NumChannelControlsIndex { get; internal set; }
+        public byte NumChannelControls { get { return m_numChannelControls; } set { m_numChannelControls = value; OnPropertyChanged(); } }
         public byte NumTexGensIndex { get; internal set; }
         public byte NumTevStages { get; internal set; }
         public bool ZCompLocIndex { get; internal set; }
         public ZMode ZModeIndex { get; internal set; }
         public bool DitherIndex { get; internal set; }
         public WLinearColor[] MaterialColorIndexes { get; internal set; }
-        public ColorChannelControl[] ColorChannelControlIndexes { get; internal set; }
+        public ColorChannelControl[] ColorChannelControls { get; internal set; }
         public WLinearColor[] AmbientColorIndexes { get; internal set; }
         public WLinearColor[] LightingColorIndexes { get; internal set; }
         public TexCoordGen[] TexGenInfoIndexes { get; internal set; }
@@ -51,6 +51,7 @@ namespace JStudio.J3D
         private string m_name;
         private byte m_flag;
         private GXCullMode m_cullMode;
+        private byte m_numChannelControls;
 
         public void Bind()
         {
@@ -135,7 +136,7 @@ namespace JStudio.J3D
                 material.Name = MaterialNameTable[m];
                 material.Flag = flag;
                 material.CullMode = ReadEntry(reader, ReadCullMode, chunkStart, offsets, 4, reader.ReadByte(), 4);
-                material.NumChannelControlsIndex = ReadEntry(reader, ReadByte, chunkStart, offsets, 6, reader.ReadByte(), 1);
+                material.NumChannelControls = ReadEntry(reader, ReadByte, chunkStart, offsets, 6, reader.ReadByte(), 1);
                 material.NumTexGensIndex = ReadEntry(reader, ReadByte, chunkStart, offsets, 10, reader.ReadByte(), 1);
                 material.NumTevStages = ReadEntry(reader, ReadByte, chunkStart, offsets, 19, reader.ReadByte(), 1);
                 material.ZCompLocIndex = ReadEntry(reader, ReadBool, chunkStart, offsets, 27, reader.ReadByte(), 1);
@@ -147,9 +148,9 @@ namespace JStudio.J3D
                     material.MaterialColorIndexes[i] = ReadEntry(reader, ReadColor32, chunkStart, offsets, 5, reader.ReadInt16(), 4);
 
 
-                material.ColorChannelControlIndexes = new ColorChannelControl[4];
-                for (int i = 0; i < material.ColorChannelControlIndexes.Length; i++)
-                    material.ColorChannelControlIndexes[i] = ReadEntry(reader, ReadChannelControl, chunkStart, offsets, 7, reader.ReadInt16(), 8);
+                material.ColorChannelControls = new ColorChannelControl[4];
+                for (int i = 0; i < material.ColorChannelControls.Length; i++)
+                    material.ColorChannelControls[i] = ReadEntry(reader, ReadChannelControl, chunkStart, offsets, 7, reader.ReadInt16(), 8);
 
                 material.AmbientColorIndexes = new WLinearColor[2];
                 for (int i = 0; i < material.AmbientColorIndexes.Length; i++)
