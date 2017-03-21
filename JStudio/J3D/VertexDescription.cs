@@ -41,7 +41,7 @@ namespace JStudio.J3D
                 case ShaderAttributeIds.PosMtxIndex:
                     return 1;
                 default:
-                    Console.WriteLine($"Unsupported attribute: {attribute} in GetAttributeSize!");)
+                    Console.WriteLine($"Unsupported attribute: {attribute} in GetAttributeSize!");
                     return 0;
             }
         }
