@@ -113,9 +113,14 @@ namespace JStudio.J3D
             // Unknowns:
             // Indirect Textures don't have an index from the Material
             // NBTSCale doesn't have a known index from the Material.
-            
+
+            // The Texture Remap table is a global table that all materials can reference, which allows the (up to) 8
+            // textures in a specific material remap to any other texture they want via this remap table. There's no
+            // pre-made count of these, so we subtract the two offsets and divide by 0x2 to get the approximate number
+            // of remaps. This may pick up an extra junk remap at the end due to padding in some files.
+            int numRemapEntries = (offsets[16] - offsets[15]) / 2;
             TextureRemapTable = new List<short>();
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < numRemapEntries; i++)
                 TextureRemapTable.Add(ReadEntry(reader, ReadShort, chunkStart, offsets, 15, i, 2));
             
             for (int m = 0; m < highestMaterialCount; m++)
