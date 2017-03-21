@@ -31,8 +31,17 @@ namespace JStudio.J3D
                     return 4;
                 case ShaderAttributeIds.Tex0:
                 case ShaderAttributeIds.Tex1:
+                case ShaderAttributeIds.Tex2:
+                case ShaderAttributeIds.Tex3:
+                case ShaderAttributeIds.Tex4:
+                case ShaderAttributeIds.Tex5:
+                case ShaderAttributeIds.Tex6:
+                case ShaderAttributeIds.Tex7:
                     return 2;
+                case ShaderAttributeIds.PosMtxIndex:
+                    return 1;
                 default:
+                    Console.WriteLine($"Unsupported attribute: {attribute} in GetAttributeSize!");)
                     return 0;
             }
         }
