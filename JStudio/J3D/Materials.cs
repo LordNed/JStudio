@@ -343,10 +343,10 @@ namespace JStudio.J3D
 
     public enum GXRegister
     {
-        Color0 = 0,
-        Color1 = 1,
-        Color2 = 2,
-        Prev = 3
+        Prev = 0,
+        Reg0 = 1,
+        Reg1 = 2,
+        Reg2 = 3,
     }
     #endregion
 
