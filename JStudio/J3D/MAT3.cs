@@ -12,11 +12,11 @@ namespace JStudio.J3D
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public string Name { get { return m_name; } set { m_name = value; OnPropertyChanged(); }}
+        public string Name { get { return m_name; } set { m_name = value; OnPropertyChanged(); } }
         public Shader Shader { get; internal set; }
         public VertexDescription VtxDesc { get; internal set; }
 
-        public byte Flag { get { return m_flag; } set { m_flag = value; OnPropertyChanged(); }}
+        public byte Flag { get { return m_flag; } set { m_flag = value; OnPropertyChanged(); } }
         public GXCullMode CullMode { get { return m_cullMode; } set { m_cullMode = value; OnPropertyChanged(); } }
         public byte NumChannelControls { get { return m_numChannelControls; } set { m_numChannelControls = value; OnPropertyChanged(); } }
         public byte NumTexGensIndex { get; internal set; }
@@ -98,11 +98,11 @@ namespace JStudio.J3D
             MaterialRemapTable = new List<short>();
             int highestMaterialCount = 0;
 
-            for(int i = 0; i < materialCount; i++)
+            for (int i = 0; i < materialCount; i++)
             {
                 var val = ReadEntry(reader, ReadShort, chunkStart, offsets, 1, i, 2);
                 if (val >= highestMaterialCount)
-                    highestMaterialCount = val+1;
+                    highestMaterialCount = val + 1;
                 MaterialRemapTable.Add(val);
             }
 
@@ -122,7 +122,7 @@ namespace JStudio.J3D
             TextureRemapTable = new List<short>();
             for (int i = 0; i < numRemapEntries; i++)
                 TextureRemapTable.Add(ReadEntry(reader, ReadShort, chunkStart, offsets, 15, i, 2));
-            
+
             for (int m = 0; m < highestMaterialCount; m++)
             {
                 // A Material entry is 0x14c long.
@@ -384,7 +384,7 @@ namespace JStudio.J3D
             var nbtScale = new NBTScale();
             nbtScale.Unknown1 = stream.ReadByte();
             Trace.Assert(stream.ReadByte() == 0xFF); // Padding
-            Trace.Assert(stream.ReadByte() == 0xFF); 
+            Trace.Assert(stream.ReadByte() == 0xFF);
             Trace.Assert(stream.ReadByte() == 0xFF);
             //stream.Skip(3);
             nbtScale.Scale = new OpenTK.Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle());
@@ -532,14 +532,14 @@ namespace JStudio.J3D
             retVal.ColorBias = (GXTevBias)stream.ReadByte();
             retVal.ColorScale = (GXTevScale)stream.ReadByte();
             retVal.ColorClamp = stream.ReadBoolean();
-            retVal.ColorRegId = stream.ReadByte();
+            retVal.ColorRegister = (GXRegister)stream.ReadByte();
             for (int i = 0; i < 4; i++)
                 retVal.AlphaIn[i] = (GXCombineAlphaInput)stream.ReadByte();
             retVal.AlphaOp = (GXTevOp)stream.ReadByte();
             retVal.AlphaBias = (GXTevBias)stream.ReadByte();
             retVal.AlphaScale = (GXTevScale)stream.ReadByte();
             retVal.AlphaClamp = stream.ReadBoolean();
-            retVal.AlphaRegId = stream.ReadByte();
+            retVal.AlphaRegister = (GXRegister)stream.ReadByte();
             retVal.Unknown1 = stream.ReadByte();
 
             Trace.Assert(retVal.Unknown0 == 0xFF);

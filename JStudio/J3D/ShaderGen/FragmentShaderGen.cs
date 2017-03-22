@@ -229,8 +229,8 @@ namespace JStudio.J3D.ShaderGen
             TevStage tevStage = mat.TevStageInfoIndexes[stageIndex];
             TevOrder tevOrder = mat.TevOrderInfoIndexes[stageIndex];
             stream.AppendFormat("\t// TEV Stage {0}\n", stageIndex);
-            stream.AppendFormat("\t// Unknown0: {0} ColorInA: {1} ColorInB: {2} ColorInC: {3} ColorInD: {4} ColorOp: {5} ColorBias: {6} ColorScale: {7} ColorClamp: {8} ColorRegId: {9}\n", tevStage.Unknown0, tevStage.ColorIn[0], tevStage.ColorIn[1], tevStage.ColorIn[2], tevStage.ColorIn[3], tevStage.ColorOp, tevStage.ColorBias, tevStage.ColorScale, tevStage.ColorClamp, tevStage.ColorRegId);
-            stream.AppendFormat("\t// AlphaInA: {0} AlphaInB: {1} AlphaInC: {2} AlphaInD: {3} AlphaOp: {4} AlphaBias: {5} AlphaScale: {6} AlphaClamp: {7} AlphaRegId: {8} Unknown1: {9}\n", tevStage.AlphaIn[0], tevStage.AlphaIn[1], tevStage.AlphaIn[2], tevStage.AlphaIn[3], tevStage.AlphaOp, tevStage.AlphaBias, tevStage.AlphaScale, tevStage.AlphaClamp, tevStage.AlphaRegId, tevStage.Unknown1);
+            stream.AppendFormat("\t// Unknown0: {0} ColorInA: {1} ColorInB: {2} ColorInC: {3} ColorInD: {4} ColorOp: {5} ColorBias: {6} ColorScale: {7} ColorClamp: {8} ColorRegId: {9}\n", tevStage.Unknown0, tevStage.ColorIn[0], tevStage.ColorIn[1], tevStage.ColorIn[2], tevStage.ColorIn[3], tevStage.ColorOp, tevStage.ColorBias, tevStage.ColorScale, tevStage.ColorClamp, tevStage.ColorRegister);
+            stream.AppendFormat("\t// AlphaInA: {0} AlphaInB: {1} AlphaInC: {2} AlphaInD: {3} AlphaOp: {4} AlphaBias: {5} AlphaScale: {6} AlphaClamp: {7} AlphaRegId: {8} Unknown1: {9}\n", tevStage.AlphaIn[0], tevStage.AlphaIn[1], tevStage.AlphaIn[2], tevStage.AlphaIn[3], tevStage.AlphaOp, tevStage.AlphaBias, tevStage.AlphaScale, tevStage.AlphaClamp, tevStage.AlphaRegister, tevStage.Unknown1);
             stream.AppendFormat("\t// Tev Order TexCoordId: {0} TexMap: {1} ChannelId: {2}\n", tevOrder.TexCoordId, tevOrder.TexMap, tevOrder.ChannelId);
 
             TevSwapMode swapMode = mat.TevSwapModeIndexes[stageIndex];
@@ -323,7 +323,7 @@ namespace JStudio.J3D.ShaderGen
 
             // COLOR COMBINER
             stream.AppendFormat("\t// Color Combine\n");
-            stream.AppendFormat("\t{0} = clamp(", m_tevCOutputTable[tevStage.ColorRegId]);
+            stream.AppendFormat("\t{0} = clamp(", m_tevCOutputTable[(byte)tevStage.ColorRegister]);
             if(tevStage.ColorOp == GXTevOp.Add || tevStage.ColorOp == GXTevOp.Sub)
             {
                 WriteTevRegular(stream, "rgb", tevStage.ColorBias, tevStage.ColorOp, tevStage.ColorScale, tevStage.ColorClamp);
@@ -354,7 +354,7 @@ namespace JStudio.J3D.ShaderGen
 
             // ALPHA COMBINER
             stream.AppendFormat("\t// Alpha Combine\n");
-            stream.AppendFormat("\t{0} = clamp(", m_tevAOutputTable[tevStage.AlphaRegId]);
+            stream.AppendFormat("\t{0} = clamp(", m_tevAOutputTable[(byte)tevStage.AlphaRegister]);
             if (tevStage.AlphaOp == GXTevOp.Add || tevStage.AlphaOp == GXTevOp.Sub)
             {
                 WriteTevRegular(stream, "a", tevStage.AlphaBias, tevStage.AlphaOp, tevStage.AlphaScale, tevStage.AlphaClamp);

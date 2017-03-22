@@ -340,6 +340,14 @@ namespace JStudio.J3D
         AlphaBumpN = 8,
         ColorNull = 0xFF,
     }
+
+    public enum GXRegister
+    {
+        Color0 = 0,
+        Color1 = 1,
+        Color2 = 2,
+        Prev = 3
+    }
     #endregion
 
     #region Material Classes
@@ -626,13 +634,13 @@ namespace JStudio.J3D
         public GXTevBias ColorBias;
         public GXTevScale ColorScale;
         public bool ColorClamp;
-        public byte ColorRegId;
+        public GXRegister ColorRegister;
         public GXCombineAlphaInput[] AlphaIn; // 4
         public GXTevOp AlphaOp;
         public GXTevBias AlphaBias;
         public GXTevScale AlphaScale;
         public bool AlphaClamp;
-        public byte AlphaRegId;
+        public GXRegister AlphaRegister;
         public byte Unknown1; // Always 0xFF
 
         public TevStage()
