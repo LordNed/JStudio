@@ -40,14 +40,14 @@ namespace JStudio.J3D.ShaderGen
         /// </summary>
         private static string[] m_tevKSelTableC = new[]
         {
-            "255,255,255",      // 1   = 0x00
-	        "223,223,223",      // 7_8 = 0x01
-	        "191,191,191",      // 3_4 = 0x02
-	        "159,159,159",      // 5_8 = 0x03
-	        "128,128,128",      // 1_2 = 0x04
-	        "96,96,96",         // 3_8 = 0x05
-	        "64,64,64",         // 1_4 = 0x06
-	        "32,32,32",         // 1_8 = 0x07
+            "255/255,255/255,255/255",      // 1   = 0x00
+	        "223/255,223/255,223/255",      // 7_8 = 0x01
+	        "191/255,191/255,191/255",      // 3_4 = 0x02
+	        "159/255,159/255,159/255",      // 5_8 = 0x03
+	        "128/255,128/255,128/255",      // 1_2 = 0x04
+	        "96/255,96/255,96/255",         // 3_8 = 0x05
+	        "64/255,64/255,64/255",         // 1_4 = 0x06
+	        "32/255,32/255,32/255",         // 1_8 = 0x07
 	        "0,0,0",            // Invalid = 0x08
 	        "0,0,0",            // Invalid = 0x09
 	        "0,0,0",            // Invalid = 0x0a
@@ -76,14 +76,14 @@ namespace JStudio.J3D.ShaderGen
 
         private static string[] m_tevKSelTableA = new[]
         {
-            "255",              // 1   = 0x00
-	        "223",              // 7_8 = 0x01
-	        "191",              // 3_4 = 0x02
-	        "159",              // 5_8 = 0x03
-	        "128",              // 1_2 = 0x04
-	        "96",               // 3_8 = 0x05
-	        "64",               // 1_4 = 0x06
-	        "32",               // 1_8 = 0x07
+            "255/255",              // 1   = 0x00
+	        "223/255",              // 7_8 = 0x01
+	        "191/255",              // 3_4 = 0x02
+	        "159/255",              // 5_8 = 0x03
+	        "128/255",              // 1_2 = 0x04
+	        "96/255",               // 3_8 = 0x05
+	        "64/255",               // 1_4 = 0x06
+	        "32/255",               // 1_8 = 0x07
 	        "0",                // Invalid = 0x08
 	        "0",                // Invalid = 0x09
 	        "0",                // Invalid = 0x0a
@@ -124,8 +124,8 @@ namespace JStudio.J3D.ShaderGen
 	        "textemp.aaa",       // TEXA
 	        "rastemp.rgb",       // RASC
 	        "rastemp.aaa",       // RASA
-	        "vec3(255,255,255)", // ONE
-	        "vec3(128,128,128)", // HALF
+	        "vec3(255/255,255/255,255/255)", // ONE
+	        "vec3(128/255,128/255,128/255)", // HALF
 	        "konsttemp.rgb",     // KONST
 	        "vec3(0,0,0)",       // ZERO
         };
@@ -188,7 +188,7 @@ namespace JStudio.J3D.ShaderGen
 
             stream.Append("\tvec4 c0 = color[0], c1 = color[1], c2 = color[2], prev = color[3];\n" +
                         "\tvec4 rastemp = vec4(0,0,0,0), textemp = vec4(0,0,0,0), konsttemp = vec4(0,0,0,0);\n" +
-                        "\tvec3 comp16 = vec3(1, 256, 0), comp24 = vec3(1, 256, 256*256);\n" + // Uhh
+                        "\tvec3 comp16 = vec3(1/256, 256/256, 0), comp24 = vec3(1/256, 256/256, (256*256)/256);\n" + // Uhh
                         "\tfloat alphabump=0;\n" +
                         "\tvec3 tevcoord=vec3(0,0,0);\n" +
                         //"\tvec2 wrappedcoord=vec2(0,0), tempcoord=vec2(0,0);\n" +
