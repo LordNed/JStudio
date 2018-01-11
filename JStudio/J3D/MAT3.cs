@@ -155,7 +155,11 @@ namespace JStudio.J3D
 
                 material.ColorChannelControls = new ColorChannelControl[4];
                 for (int i = 0; i < material.ColorChannelControls.Length; i++)
-                    material.ColorChannelControls[i] = ReadEntry(reader, ReadChannelControl, chunkStart, offsets, 7, reader.ReadInt16(), 8);
+                {
+                    var val = reader.ReadInt16();
+                    if(val >= 0)
+                        material.ColorChannelControls[i] = ReadEntry(reader, ReadChannelControl, chunkStart, offsets, 7, val, 8);
+                }
 
                 material.AmbientColorIndexes = new WLinearColor[2];
                 for (int i = 0; i < material.AmbientColorIndexes.Length; i++)
@@ -258,13 +262,9 @@ namespace JStudio.J3D
                 }
                 material.TevSwapModeIndexes = tevSwapModeList.ToArray();
 
-                material.TevSwapModeTableIndexes = new TevSwapModeTable[4];
+                material.TevSwapModeTableIndexes = new TevSwapModeTable[16];
                 for (int i = 0; i < material.TevSwapModeTableIndexes.Length; i++)
                     material.TevSwapModeTableIndexes[i] = ReadEntry(reader, ReadTevSwapModeTable, chunkStart, offsets, 22, reader.ReadInt16(), 4);
-
-                material.UnknownIndexes = new short[12];
-                for (int l = 0; l < material.UnknownIndexes.Length; l++)
-                    material.UnknownIndexes[l] = reader.ReadInt16();
 
                 material.FogModeIndex = ReadEntry(reader, ReadFogInfo, chunkStart, offsets, 23, reader.ReadInt16(), 44);
                 material.AlphaTest = ReadEntry(reader, ReadAlphaCompare, chunkStart, offsets, 24, reader.ReadInt16(), 8);
