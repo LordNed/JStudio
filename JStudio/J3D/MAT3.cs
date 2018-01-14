@@ -262,9 +262,14 @@ namespace JStudio.J3D
                 }
                 material.TevSwapModeIndexes = tevSwapModeList.ToArray();
 
-                material.TevSwapModeTableIndexes = new TevSwapModeTable[16];
+                material.TevSwapModeTableIndexes = new TevSwapModeTable[4];
                 for (int i = 0; i < material.TevSwapModeTableIndexes.Length; i++)
                     material.TevSwapModeTableIndexes[i] = ReadEntry(reader, ReadTevSwapModeTable, chunkStart, offsets, 22, reader.ReadInt16(), 4);
+
+                // We're still not sure what these are, but they're not TevSwapModeTables, because those are 4 bytes each.
+                material.UnknownIndexes = new short[12];
+                for (int l = 0; l < material.UnknownIndexes.Length; l++)
+                material.UnknownIndexes[l] = reader.ReadInt16();
 
                 material.FogModeIndex = ReadEntry(reader, ReadFogInfo, chunkStart, offsets, 23, reader.ReadInt16(), 44);
                 material.AlphaTest = ReadEntry(reader, ReadAlphaCompare, chunkStart, offsets, 24, reader.ReadInt16(), 8);
