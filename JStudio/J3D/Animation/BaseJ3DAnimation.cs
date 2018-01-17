@@ -115,31 +115,21 @@ namespace JStudio.J3D.Animation
             if (keys.Count == 1)
                 return keys[0].Value;
 
-            /*int i = 1;
-            // The game can have a final keyframe which is not at the end of the animation (time wise),
-            // so we just hold on the last frame if this is the case.
-            while(keys[i].Time < frameTime && ++i < keys.Count)
-            {
-            }
-
-            Key keyA = keys[i - 1];
-            Key keyB = keys[i];
-            float t = (frameTime - keyA.Time) / (keyB.Time - keyA.Time); // Scale to [0, 1]
-            return CubicInterpolation(keyA, keyB, t);*/
-
             int i = 1;
-            int t = 1;
-            while (keys[i].Time < t)
+            while (keys[i].Time < frameTime)
             {
                 i++;
+				// This fixes the case where the last frame of the animation doesn't have a key, we'll just hold on the last key.
                 if (i >= keys.Count)
                 {
-                    i = 1;
-                    break;
+                    i = keys.Count -1;
+					frameTime = keys[keys.Count - 1].Time;
+
+					break;
                 }
             }
 
-            float time = (t - keys[i - 1].Time) / (keys[i].Time - keys[i - 1].Time); // Scale to [0, 1]
+            float time = (frameTime - keys[i - 1].Time) / (keys[i].Time - keys[i - 1].Time); // Scale to [0, 1]
             return CubicInterpolation(keys[i - 1], keys[i], time);
         }
 
