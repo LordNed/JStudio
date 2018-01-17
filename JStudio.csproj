@@ -66,6 +66,7 @@
     <Compile Include="JStudio\GXToOpenGL.cs" />
     <Compile Include="JStudio\J3D\Animation\BaseJ3DAnimation.cs" />
     <Compile Include="JStudio\J3D\Animation\BCK.cs" />
+    <Compile Include="JStudio\J3D\Animation\BRK.cs" />
     <Compile Include="JStudio\J3D\Animation\BTK.cs" />
     <Compile Include="JStudio\J3D\BinaryTextureImage.cs" />
     <Compile Include="JStudio\J3D\DRW1.cs" />

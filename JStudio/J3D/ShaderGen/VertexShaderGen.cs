@@ -235,7 +235,7 @@ namespace JStudio.J3D.ShaderGen
                                 if (matrixProj == TexMatrixProjection.TexProj_STQ)
                                     stream.AppendFormat("\t\t{0}.xyz = vec3(dot(coord, TexMtx[{1}][0]), dot(coord, TexMtx[{1}][1]), dot(coord, TexMtx[{1}][2]));\n", destCoord, i); //3x4
                                 else
-                                    stream.AppendFormat("\t\t{0}.xyz = vec3(dot(coord, TexMtx[{1}][0]), dot(coord, TexMtxs[{1}][1]), 1);\n", destCoord, i); //2x4
+                                    stream.AppendFormat("\t\t{0}.xyz = vec3(dot(coord, TexMtx[{1}][0]), dot(coord, TexMtx[{1}][1]), 1);\n", destCoord, i); //2x4
                             }
                             else
                             {
@@ -244,7 +244,7 @@ namespace JStudio.J3D.ShaderGen
                         }
                         break;
                     case GXTexGenType.SRTG:
-                        stream.AppendFormat("\t{0} = vec3({1}.rg, 1);\n", destCoord, texGenSource); break;
+                        stream.AppendFormat("\t\t{0} = vec3({1}.rg, 1);\n", destCoord, texGenSource); break;
                     case GXTexGenType.Bump0:
                     case GXTexGenType.Bump1:
                     case GXTexGenType.Bump2:
@@ -266,14 +266,18 @@ namespace JStudio.J3D.ShaderGen
                     //TexMatrix postTexMtx = mat.PostTexMatrixIndexes
                     // ToDo: Should this just be... i? lol
                     Console.WriteLine("PostMtx transforms are... not really anything supported?");
-                    //TexMatrix postTexMtx = mat.PostTexMatrixIndexes[((int)texGen.TexMatrixSource) - 30];
-                    //int postIndex = postTexMtx. mat.PostTexMatrixIndexes[i];
-                    //stream.AppendFormat("float4 P0 = PostMtx[{0}];\n", postIndex);
-                    //stream.AppendFormat("float4 P1 = PostMtx[{0}];\n", postIndex + 1);
-                    //stream.AppendFormat("float4 P2 = PostMtx[{0}];\n", postIndex + 2);
+                    /*TexMatrix postTexMtx = mat.PostTexMatrixIndexes[i];
 
-                    //stream.AppendFormat("{0}.xyz = vec3(dot(P0.xyz, {0}.xyz) + P0.w, dot(P1.xyz, {0}.xyz) + P1.w, dot(P2.xyz, {0}.xyz) + P2.w);\n", destCoord);
-                }
+                    if (postTexMtx == null)
+                        break;
+
+                    int postIndex = i;
+                    stream.AppendFormat("float4 P0 = PostMtx[{0}];\n", postIndex);
+                    stream.AppendFormat("float4 P1 = PostMtx[{0}];\n", postIndex + 1);
+                    stream.AppendFormat("float4 P2 = PostMtx[{0}];\n", postIndex + 2);
+
+                    stream.AppendFormat("{0}.xyz = vec3(dot(P0.xyz, {0}.xyz) + P0.w, dot(P1.xyz, {0}.xyz) + P1.w, dot(P2.xyz, {0}.xyz) + P2.w);\n", destCoord);
+                */}
 
                 stream.AppendLine("\t}"); // End of false-scope block.
             }

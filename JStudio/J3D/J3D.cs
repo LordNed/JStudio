@@ -41,8 +41,10 @@ namespace JStudio.J3D
 
         public ObservableCollection<BCK> BoneAnimations { get { return m_boneAnimations; } }
         public ObservableCollection<BTK> MaterialAnimations { get { return m_materialAnimations; } }
+        public ObservableCollection<BRK> RegisterAnimations { get { return m_registerAnimations; } }
 
         public ObservableCollection<BMT> ExternalMaterials { get { return m_externalMaterials; } }
+
         public BCK CurrentBoneAnimation
         {
             get { return m_currentBoneAnimation; }
@@ -61,6 +63,11 @@ namespace JStudio.J3D
             set { SetExternalMaterial(value != null ? value.Name : null); }
         }
 
+        public BRK CurrentRegisterAnimation
+        {
+            get { return m_currentRegisterAnimation; }
+            set { SetRegisterAnimation(value != null ? value.Name : null); }
+        }
 
         // Hack
         private Matrix4 m_viewMatrix;
@@ -77,10 +84,12 @@ namespace JStudio.J3D
         private ObservableCollection<BCK> m_boneAnimations;
         private ObservableCollection<BTK> m_materialAnimations;
         private ObservableCollection<BMT> m_externalMaterials;
+        private ObservableCollection<BRK> m_registerAnimations;
 
         private BCK m_currentBoneAnimation;
         private BTK m_currentMaterialAnimation;
         private BMT m_currentExternalMaterial;
+        private BRK m_currentRegisterAnimation;
 
         private bool m_skinningInvalid;
         private int m_totalFileSize;
@@ -114,6 +123,7 @@ namespace JStudio.J3D
             m_boneAnimations = new ObservableCollection<BCK>();
             m_materialAnimations = new ObservableCollection<BTK>();
             m_externalMaterials = new ObservableCollection<BMT>();
+            m_registerAnimations = new ObservableCollection<BRK>();
 
             // Mark this as true when we first load so it moves non-animated pieces into the right area.
             m_skinningInvalid = true;
@@ -163,6 +173,17 @@ namespace JStudio.J3D
             m_materialAnimations.Add(btk);
         }
 
+        public void LoadRegisterAnim(string brkFile)
+        {
+            string animName = Path.GetFileNameWithoutExtension(brkFile);
+            BRK brk = new BRK(animName);
+
+            using (var reader = FileUtilities.LoadFile(brkFile))
+                brk.LoadFromStream(reader);
+
+            m_registerAnimations.Add(brk);
+        }
+
         public void LoadExternalMaterial(string bmtFile)
         {
             string fileName = Path.GetFileNameWithoutExtension(bmtFile);
@@ -193,6 +214,11 @@ namespace JStudio.J3D
         public void UnloadExternalMaterials()
         {
             m_externalMaterials.Clear();
+        }
+
+        public void UnloadRegisterAnimations()
+        {
+            m_registerAnimations.Clear();
         }
 
         public void SetBoneAnimation(string animName)
@@ -244,6 +270,29 @@ namespace JStudio.J3D
 
             // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentMaterialAnimation");
+        }
+
+        public void SetRegisterAnimation(string animName)
+        {
+            BRK anim = null;
+            if (!string.IsNullOrEmpty(animName))
+            {
+                anim = m_registerAnimations.FirstOrDefault(x => x.Name == animName);
+                if (anim == null)
+                {
+                    Console.WriteLine("Failed to play register animation {0}, animation not loaded!", animName);
+                }
+            }
+
+            if (m_currentRegisterAnimation != null)
+                m_currentRegisterAnimation.Stop();
+
+            m_currentRegisterAnimation = anim;
+
+            if (m_currentRegisterAnimation != null)
+                m_currentRegisterAnimation.Start();
+
+            OnPropertyChanged("CurrentRegisterAnimation");
         }
 
         public void SetExternalMaterial(string bmtName)
@@ -442,11 +491,17 @@ namespace JStudio.J3D
             foreach (var matAnim in m_materialAnimations)
                 matAnim.Tick(deltaTime);
 
+            foreach (var regAnim in m_registerAnimations)
+                regAnim.Tick(deltaTime);
+
             if (m_currentBoneAnimation != null)
                 m_currentBoneAnimation.ApplyAnimationToPose(JNT1Tag.AnimatedJoints);
 
             if (m_currentMaterialAnimation != null)
                 m_currentMaterialAnimation.ApplyAnimationToMaterials(MAT3Tag);
+
+            if (m_currentRegisterAnimation != null)
+                m_currentRegisterAnimation.ApplyAnimationToMaterials(MAT3Tag, m_tevColorOverrides);
         }
 
         public void Render(Matrix4 viewMatrix, Matrix4 projectionMatrix, Matrix4 modelMatrix)
