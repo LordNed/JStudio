@@ -17,6 +17,8 @@ namespace JStudio.J3D
         public VertexDescription VtxDesc { get; internal set; }
 
         public byte Flag { get { return m_flag; } set { m_flag = value; OnPropertyChanged(); } }
+        public bool IsOpaque { get { return (Flag & 3) == 0 ? true : false; } }
+
         public GXCullMode CullMode { get { return m_cullMode; } set { m_cullMode = value; OnPropertyChanged(); } }
         public byte NumChannelControls { get { return m_numChannelControls; } set { m_numChannelControls = value; OnPropertyChanged(); } }
         public byte NumTexGensIndex { get; internal set; }
