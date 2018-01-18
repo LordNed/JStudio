@@ -74,6 +74,8 @@ namespace JStudio.J3D.Animation
         protected float m_timeSinceStartedPlaying;
         protected bool m_isPlaying;
 
+        protected OpenTK.Matrix4 m_hermiteMatrix = new OpenTK.Matrix4(2, -2, 1, 1, -3, 3, -2, -1, 0, 0, 1, 0, 1, 0, 0, 0);
+
         public BaseJ3DAnimation(string name)
         {
             Name = name;
@@ -119,18 +121,19 @@ namespace JStudio.J3D.Animation
             while (keys[i].Time < frameTime)
             {
                 i++;
-				// This fixes the case where the last frame of the animation doesn't have a key, we'll just hold on the last key.
+                // This fixes the case where the last frame of the animation doesn't have a key, we'll just hold on the last key.
                 if (i >= keys.Count)
                 {
-                    i = keys.Count -1;
-					frameTime = keys[keys.Count - 1].Time;
+                    i = keys.Count - 1;
+                    frameTime = keys[keys.Count - 1].Time;
 
-					break;
+                    break;
                 }
             }
-
+            
             float time = (frameTime - keys[i - 1].Time) / (keys[i].Time - keys[i - 1].Time); // Scale to [0, 1]
-            return CubicInterpolation(keys[i - 1], keys[i], time);
+
+            return HermiteInterpolation(keys[i - 1], keys[i], time);
         }
 
         protected virtual float CubicInterpolation(Key key1, Key key2, float t)
@@ -141,6 +144,34 @@ namespace JStudio.J3D.Animation
             float d = key1.Value;
 
             return ((a * t + b) * t + c) * t + d;   
+        }
+
+        protected virtual float HermiteInterpolation(Key key1, Key key2, float t)
+        {
+            float numFramesBetweenKeys = key2.Time - key1.Time;
+
+            OpenTK.Vector4 s = new OpenTK.Vector4(t * t * t, t * t, t, 1);
+            OpenTK.Vector4 c = new OpenTK.Vector4(key1.Value, key2.Value, key1.TangentOut * numFramesBetweenKeys, key2.TangentIn * numFramesBetweenKeys);
+            OpenTK.Vector4 result = OpenTK.Vector4.Transform(s, m_hermiteMatrix);
+            result = OpenTK.Vector4.Multiply(result, c);
+
+            return result[0] + result[1] + result[2] + result[3];
+
+            /*float h1 = (2 * (float)Math.Pow(t, 3)) - (3 * (float)Math.Pow(t, 2)) + 1;
+            float h2 = (-2 * (float)Math.Pow(t, 3)) + (3 * (float)Math.Pow(t, 2)) + t;
+            float h3 = (float)Math.Pow(t, 3) - (2 * (float)Math.Pow(t, 2)) + t;
+            float h4 = (float)Math.Pow(t, 3) - (float)Math.Pow(t, 2);
+            float dist = key2.Value - key1.Value;
+
+            float output = (h1 * key1.Value) + (h2 * key2.Value) + (h3 * (key1.TangentOut * dist)) + (h4 * (key2.TangentIn * dist));
+            //Console.WriteLine(output);
+
+            return output;*/
+        }
+
+        protected virtual float LinearInterpolation(Key key1, Key key2, float t)
+        {
+            return WindEditor.WMath.Lerp(key1.Value, key2.Value, t);
         }
 
         protected void ConvertRotation(List<Key> rots, float scale)

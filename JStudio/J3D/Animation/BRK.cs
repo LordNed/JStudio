@@ -223,6 +223,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0x3FF);
                     key.Value = strippedValue / 1023.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.GreenChannel)
@@ -230,6 +232,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0x3FF);
                     key.Value = strippedValue / 1023.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.BlueChannel)
@@ -237,6 +241,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0x3FF);
                     key.Value = strippedValue / 1023.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.AlphaChannel)
@@ -244,6 +250,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0x3FF);
                     key.Value = strippedValue / 1023.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 m_colorAnimationData.Add(regAnim);
@@ -274,6 +282,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0xFF);
                     key.Value = strippedValue / 255.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.GreenChannel)
@@ -281,6 +291,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0xFF);
                     key.Value = strippedValue / 255.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.BlueChannel)
@@ -288,6 +300,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0xFF);
                     key.Value = strippedValue / 255.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.AlphaChannel)
@@ -295,6 +309,8 @@ namespace JStudio.J3D.Animation
                     short interValue = (short)key.Value;
                     short strippedValue = (short)(interValue & 0xFF);
                     key.Value = strippedValue / 255.0f;
+                    key.TangentIn = (float)key.TangentIn / 65535.0f;
+                    key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 m_konstAnimationData.Add(regAnim);
