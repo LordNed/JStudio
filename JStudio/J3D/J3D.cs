@@ -192,12 +192,15 @@ namespace JStudio.J3D
             using (var reader = FileUtilities.LoadFile(bmtFile))
                 bmt.LoadFromStream(reader);
 
-            // Generate shaders for the loaded materials.
-            Material dummyMat = null;
-            AssignVertexAttributesToMaterialsRecursive(INF1Tag.HierarchyRoot, ref dummyMat, bmt.MAT3);
+            if (bmt.MaterialsCount != 0)
+            {
+                // Generate shaders for the loaded materials.
+                Material dummyMat = null;
+                AssignVertexAttributesToMaterialsRecursive(INF1Tag.HierarchyRoot, ref dummyMat, bmt.MAT3);
 
-            // Now that the vertex attributes are assigned to the materials, generate a shader from the data.
-            GenerateShadersForMaterials(bmt.MAT3, false);
+                // Now that the vertex attributes are assigned to the materials, generate a shader from the data.
+                GenerateShadersForMaterials(bmt.MAT3, false);
+            }
 
             m_externalMaterials.Add(bmt);
         }
@@ -668,8 +671,16 @@ namespace JStudio.J3D
 
         private void BindMaterialByIndex(ushort index)
         {
-            MAT3 mat3 = m_currentExternalMaterial != null ? m_currentExternalMaterial.MAT3 : MAT3Tag;
-            TEX1 tex1 = m_currentExternalMaterial != null ? m_currentExternalMaterial.TEX1 : TEX1Tag;
+            MAT3 mat3 = MAT3Tag;
+            TEX1 tex1 = TEX1Tag;
+
+            if (m_currentExternalMaterial != null)
+            {
+                if (m_currentExternalMaterial.MaterialsCount != 0)
+                    mat3 = m_currentExternalMaterial.MAT3;
+                if (m_currentExternalMaterial.TexturesCount != 0)
+                    tex1 = m_currentExternalMaterial.TEX1;
+            }
 
             // While the game collapses duplicate materials via the material index remap table,
             // the actual original names are preserved with their original indexes through the

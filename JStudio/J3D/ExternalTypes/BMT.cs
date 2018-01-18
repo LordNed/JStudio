@@ -13,8 +13,8 @@ namespace JStudio.JStudio.J3D.ExternalTypes
         public string Name { get; private set; }
         public string Magic { get; private set; }
         public string FileType { get; private set; }
-        public int MaterialsCount { get { return MAT3.MaterialList.Count; } }
-        public int TexturesCount { get { return TEX1.Textures.Count; } }
+        public int MaterialsCount { get { return MAT3 == null ? 0 : MAT3.MaterialList.Count; } }
+        public int TexturesCount  { get { return TEX1 == null ? 0 : TEX1.Textures.Count; } }
 
         public MAT3 MAT3 { get { return m_mat3Section; } }
         public TEX1 TEX1 { get { return m_tex1Section; } }
@@ -90,13 +90,19 @@ namespace JStudio.JStudio.J3D.ExternalTypes
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
-                    foreach (var texture in TEX1.Textures)
-                        texture.Dispose();
+                    if (TEX1 != null)
+                    {
+                        // TODO: dispose managed state (managed objects).
+                        foreach (var texture in TEX1.Textures)
+                            texture.Dispose();
+                    }
 
-                    foreach (var material in MAT3.MaterialList)
-                        if (material.Shader != null)
-                            material.Shader.Dispose();
+                    if (MAT3 != null)
+                    {
+                        foreach (var material in MAT3.MaterialList)
+                            if (material.Shader != null)
+                                material.Shader.Dispose();
+                    }
                 }
 
                 m_hasBeenDisposed = true;

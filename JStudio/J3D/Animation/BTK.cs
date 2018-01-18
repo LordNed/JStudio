@@ -85,8 +85,8 @@ namespace JStudio.J3D.Animation
 
                 texMatrix.Rotation = rot.X; //?
 
-                texMatrix.TranslateS = translation.X;
-                texMatrix.TranslateT = translation.Y;
+                 texMatrix.TranslateS = translation.X - center.X;
+                texMatrix.TranslateT = translation.Y - center.Y;
             }
         }
 
