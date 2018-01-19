@@ -176,7 +176,7 @@ namespace JStudio.OpenGL
                     case GXCompareType.Less: GL.DepthFunc(DepthFunction.Less); break;
                     case GXCompareType.Equal: GL.DepthFunc(DepthFunction.Equal); break;
                     case GXCompareType.LEqual: GL.DepthFunc(DepthFunction.Lequal); break;
-                    case GXCompareType.Greater: GL.DepthFunc(DepthFunction.Gequal); break;
+                    case GXCompareType.Greater: GL.DepthFunc(DepthFunction.Greater); break;
                     case GXCompareType.NEqual: GL.DepthFunc(DepthFunction.Notequal); break;
                     case GXCompareType.GEqual: GL.DepthFunc(DepthFunction.Gequal); break;
                     case GXCompareType.Always: GL.DepthFunc(DepthFunction.Always); break;

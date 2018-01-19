@@ -249,6 +249,8 @@ namespace JStudio.J3D
 
             // The setter for CurrentBoneAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentBoneAnimation");
+
+            ForceAnimationRestart();
         }
 
         public void SetMaterialAnimation(string animName)
@@ -273,6 +275,8 @@ namespace JStudio.J3D
 
             // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentMaterialAnimation");
+
+            ForceAnimationRestart();
         }
 
         public void SetRegisterAnimation(string animName)
@@ -296,6 +300,8 @@ namespace JStudio.J3D
                 m_currentRegisterAnimation.Start();
 
             OnPropertyChanged("CurrentRegisterAnimation");
+
+            ForceAnimationRestart();
         }
 
         public void SetExternalMaterial(string bmtName)
@@ -314,6 +320,27 @@ namespace JStudio.J3D
 
             // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentExternalMaterial");
+        }
+
+        private void ForceAnimationRestart()
+        {
+            foreach (BCK bck in m_boneAnimations)
+            {
+                bck.Stop();
+                bck.Start();
+            }
+
+            foreach (BTK btk in m_materialAnimations)
+            {
+                btk.Stop();
+                btk.Start();
+            }
+
+            foreach (BRK brk in m_registerAnimations)
+            {
+                brk.Stop();
+                brk.Start();
+            }
         }
 
         /// <summary>
@@ -661,6 +688,7 @@ namespace JStudio.J3D
 
                 case HierarchyDataType.Batch:
                     //if (curNode.Value != m_shapeIndex) break;
+                    //if (curNode.Value != 0) break;
                     RenderBatchByIndex(curNode.Value);
                     break;
             }
