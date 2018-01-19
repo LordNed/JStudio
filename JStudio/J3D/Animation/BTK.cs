@@ -2,6 +2,7 @@
 using OpenTK;
 using System;
 using System.Collections.Generic;
+using WindEditor;
 
 namespace JStudio.J3D.Animation
 {
@@ -76,18 +77,18 @@ namespace JStudio.J3D.Animation
                 Vector3 rot = new Vector3(GetAnimValue(m_animationData[i].RotationsX, ftime), GetAnimValue(m_animationData[i].RotationsY, ftime), GetAnimValue(m_animationData[i].RotationsZ, ftime));
                 Vector3 translation = new Vector3(GetAnimValue(m_animationData[i].TranslationsX, ftime), GetAnimValue(m_animationData[i].TranslationsY, ftime), GetAnimValue(m_animationData[i].TranslationsZ, ftime));
 
-                texMatrix.CenterS = center.X;
-                texMatrix.CenterT = center.Y;
-                texMatrix.CenterW = center.Z;
+				Matrix4 T = Matrix4.CreateTranslation(translation);
+				Matrix4 C = Matrix4.CreateTranslation(center);
+				// ZYX order
+				Matrix4 R = Matrix4.CreateRotationZ(WMath.DegreesToRadians(rot.Z)) *
+							Matrix4.CreateRotationY(WMath.DegreesToRadians(rot.Y)) *
+							Matrix4.CreateRotationX(WMath.DegreesToRadians(rot.X));
+				Matrix4 S = Matrix4.CreateScale(scale);
 
-                texMatrix.ScaleS = scale.X;
-                texMatrix.ScaleT = scale.Y;
+				// texMatrix.Matrix = T * C.Inverted() * (S * C); <-- Closest so far
+				texMatrix.Matrix = T * C.Inverted() * (S * C);
 
-                texMatrix.Rotation = rot.X; //?
-
-                 texMatrix.TranslateS = translation.X - center.X;
-                texMatrix.TranslateT = translation.Y - center.Y;
-            }
+			}
         }
 
         private void LoadTagDataFromFile(EndianBinaryReader reader, int tagCount)

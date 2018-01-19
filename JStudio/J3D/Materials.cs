@@ -510,12 +510,13 @@ namespace JStudio.J3D
         {
             get
             {
-                Matrix4 scale = Matrix4.CreateScale(new Vector3(ScaleS, ScaleT, 1));
-                Matrix4 rot = Matrix4.CreateRotationX(Rotation);
-                Matrix4 translation = Matrix4.CreateTranslation(/*new Vector3(CenterS, CenterT, CenterW) + */new Vector3(TranslateS, TranslateT, 0));
+				Matrix4 S = Matrix4.CreateScale(ScaleS, ScaleT, 1f);
+				Matrix4 C = Matrix4.CreateTranslation(CenterS, CenterT, CenterW);
+				Matrix4 T = Matrix4.CreateTranslation(new Vector3(TranslateS, TranslateT, 0));
 
-                return scale * rot * translation;
-            }
+				// Matrix * (T * C.Inverted() * (S * C)); <-- Closest so far
+				return Matrix * (T * C.Inverted() * (S * C));
+			}
         }
     }
 
