@@ -20,16 +20,19 @@ namespace JStudio.J3D.ShaderGen
             stream.AppendLine("// Per-Vertex Input");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Position)) stream.AppendLine("in vec3 RawPosition;");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Normal)) stream.AppendLine("in vec3 RawNormal;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Color0)) stream.AppendLine("in vec4 RawColor0;");
+            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Binormal)) stream.AppendLine("in vec3 RawNormal1;");
+			if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Color0)) stream.AppendLine("in vec4 RawColor0;");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Color1)) stream.AppendLine("in vec4 RawColor1;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex0)) stream.AppendLine("in vec2 RawTex0;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex1)) stream.AppendLine("in vec2 RawTex1;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex2)) stream.AppendLine("in vec2 RawTex2;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex3)) stream.AppendLine("in vec2 RawTex3;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex4)) stream.AppendLine("in vec2 RawTex4;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex5)) stream.AppendLine("in vec2 RawTex5;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex6)) stream.AppendLine("in vec2 RawTex6;");
-            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Tex7)) stream.AppendLine("in vec2 RawTex7;");
+			for(int i = 0; i < 8; i++)
+			{
+				bool bHasTexUV = mat.VtxDesc.AttributeIsEnabled((ShaderAttributeIds)(i + ShaderAttributeIds.Tex0));
+				bool bHasTexMtx = i < mat.TexGenInfoIndexes.Length ? mat.TexGenInfoIndexes[i].TexMatrixSource != GXTexMatrix.Identity : false;
+				if(bHasTexUV || bHasTexMtx)
+				{
+					string numChannels = bHasTexMtx ? "3" : "2";
+					stream.AppendLine($"in vec{numChannels} RawTex{i};");
+				}
+			}
             stream.AppendLine();
 
             stream.AppendLine("// Output (Interpolated)");
@@ -167,7 +170,7 @@ namespace JStudio.J3D.ShaderGen
                 if (mat.NumChannelControls == 1 || mat.NumChannelControls == 3)
                 {
                     // ToDo: https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/LightingShaderGen.h#L184 looks like a better implementation
-                    stream.AppendLine("\t// Doing an unknown fixup. There's only one color channel enabled, so we never write to the alpha of the color_*, and thus it never gets initialized.");
+                    stream.AppendLine("\t // Doing an unknown fixup. There's only one color channel enabled, so we never write to the alpha of the color_*, and thus it never gets initialized.");
                     stream.AppendFormat("\t{0}.a = matColor.a;\n", channelTarget);
                 }
             }
@@ -213,33 +216,57 @@ namespace JStudio.J3D.ShaderGen
                     matrixProj = mat.TexMatrixIndexes[(((int)texGen.TexMatrixSource) - 30) / 3].Projection;
                 }
 
-                // TEV Texture Coordinate generation takes the general form:
-                // dst_coord = func(src_param, mtx), where func is GXTexGenType, src_param is GXTexGenSrc, and mtx is GXTexMtx.
+				// TEV Texture Coordinate generation takes the general form:
+				// dst_coord = func(src_param, mtx), where func is GXTexGenType, src_param is GXTexGenSrc, and mtx is GXTexMtx.
                 string destCoord = string.Format("TexGen{0}", i);
                 switch (texGen.Type)
                 {
                     case GXTexGenType.Matrix3x4:
                     case GXTexGenType.Matrix2x4:
-                        //if(mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.TexMtxId))
-                        //{
-                        //    stream.AppendFormat("int temp = {0}.z\n", destCoord);
-                        //    if (texMtx.Projection == TexMatrixProjection.TexProj_STQ)
-                        //        stream.AppendFormat("{0}.xyz = vec3(dot({1}, TexMtx[temp]), dot({1}, TexMtx[temp+1]), dot({1}, TexMtx[temp+2]));\n", destCoord, texGenSource);
-                        //    else
-                        //        stream.AppendFormat("{0}.xyz = vec3(dot({1}, TexMtx[temp]), dot({1}, TexMtx[temp+1]), 1);\n", destCoord, texGenSource);
-                        //}
-                        //else
+						if(mat.VtxDesc.AttributeIsEnabled((ShaderAttributeIds)(ShaderAttributeIds.Tex0+i)))
+						{
+							if (texGen.TexMatrixSource != GXTexMatrix.Identity)
+							{
+								stream.AppendLine($"\t\tint tmp = {i}; // int(RawTex{i}.z);");
+
+								// These should both be using "float4 I_TRANSFORMMATRICES[64]" 
+								if (mat.TexMatrixIndexes[((int)texGen.TexMatrixSource - 30) / 3].Projection == TexMatrixProjection.TexProj_STQ)
+								{
+									stream.AppendLine("\t\t // TexProj_STQ");
+									stream.AppendFormat($"\t\t{destCoord}.xyz = vec3(dot(coord, TexMtx[{i}][0]), dot(coord, TexMtx[{i}][1]), dot(coord, TexMtx[{i}][2]));\n");
+								}
+								else
+								{
+									stream.AppendLine("\t\t // TexProj_ST");
+									stream.AppendFormat($"\t\t{destCoord}.xyz = vec3(dot(coord, TexMtx[{i}][0]), dot(coord, TexMtx[{i}][1]), 1);\n");
+								}
+							}
+							else
+							{
+								stream.AppendLine("\t\t // Identity Matrix");
+								stream.AppendFormat("\t\t{0} = coord.xyz;\n", destCoord);
+							}
+						}
+                        else
                         {
                             if(texGen.TexMatrixSource != GXTexMatrix.Identity)
                             {
-                                if (matrixProj == TexMatrixProjection.TexProj_STQ)
-                                    stream.AppendFormat("\t\t{0}.xyz = vec3(dot(coord, TexMtx[{1}][0]), dot(coord, TexMtx[{1}][1]), dot(coord, TexMtx[{1}][2]));\n", destCoord, i); //3x4
-                                else
-                                    stream.AppendFormat("\t\t{0}.xyz = vec3(dot(coord, TexMtx[{1}][0]), dot(coord, TexMtx[{1}][1]), 1);\n", destCoord, i); //2x4
+								// These should be using "float4 I_TEXMATRICES[24]"
+								if (matrixProj == TexMatrixProjection.TexProj_STQ)
+								{
+									stream.AppendLine("\t\t // TexProj_STQ");
+									stream.AppendFormat($"\t\t{destCoord}.xyz = vec3(dot(coord, TexMtx[{i}][0]), dot(coord, TexMtx[{i}][1]), dot(coord, TexMtx[{i}][2]));\n", destCoord); //3x4
+								}
+								else
+								{
+									stream.AppendLine("\t\t // TexProj_ST");
+									stream.AppendFormat($"\t\t{destCoord}.xyz = vec3(dot(coord, TexMtx[{i}][0]), dot(coord, TexMtx[{i}][1]), 1);\n", destCoord); //2x4
+								}
                             }
                             else
                             {
-                                stream.AppendFormat("\t\t{0} = coord.xyz;\n", destCoord);
+								stream.AppendLine("\t\t // Identity Matrix");
+								stream.AppendFormat("\t\t{0} = coord.xyz;\n", destCoord);
                             }
                         }
                         break;
@@ -261,25 +288,31 @@ namespace JStudio.J3D.ShaderGen
                 }
 
                 // Dual Tex Transforms
-                if (mat.PostTexMatrixIndexes.Length > 0)
+				for(int k = 0; k < mat.PostTexMatrixIndexes.Length; k++)
                 {
-                    //TexMatrix postTexMtx = mat.PostTexMatrixIndexes
-                    // ToDo: Should this just be... i? lol
                     Console.WriteLine("PostMtx transforms are... not really anything supported?");
-                    /*TexMatrix postTexMtx = mat.PostTexMatrixIndexes[i];
+                    TexMatrix postTexMtx = mat.PostTexMatrixIndexes[k];
 
-                    if (postTexMtx == null)
-                        break;
+					int postIndex = ((int)mat.PostTexGenInfoIndexes[k].TexMatrixSource - 30) / 3;
+					// This should be using float4 I_POSTTRANSFORMMATRICES[64]
+                    stream.AppendFormat($"float4 P0 = PostMtx[{postIndex}];\n");
+                    stream.AppendFormat($"float4 P1 = PostMtx[{postIndex+1}];\n");
+					stream.AppendFormat($"float4 P2 = PostMtx[{postIndex + 2}];\n");
 
-                    int postIndex = i;
-                    stream.AppendFormat("float4 P0 = PostMtx[{0}];\n", postIndex);
-                    stream.AppendFormat("float4 P1 = PostMtx[{0}];\n", postIndex + 1);
-                    stream.AppendFormat("float4 P2 = PostMtx[{0}];\n", postIndex + 2);
+					// Normalization support?
+					// $"{destCoord}.xyz = normalize({destCoord}.xyz);
 
-                    stream.AppendFormat("{0}.xyz = vec3(dot(P0.xyz, {0}.xyz) + P0.w, dot(P1.xyz, {0}.xyz) + P1.w, dot(P2.xyz, {0}.xyz) + P2.w);\n", destCoord);
-                */}
+					// Multiply by postmatrix
+                    stream.AppendFormat($"{destCoord}.xyz = vec3(" +
+						$"dot(P0.xyz, {destCoord}.xyz) + P0.w," +
+						$"dot(P1.xyz, {destCoord}.xyz) + P1.w," +
+						$"dot(P2.xyz, {destCoord}.xyz) + P2.w);\n");
+                }
 
-                stream.AppendLine("\t}"); // End of false-scope block.
+				stream.AppendLine("\t\t// Seems to be some sort of special case on the GameCube?");
+				stream.AppendLine($"\t\tif({destCoord}.z == 0.0f)");
+				stream.AppendLine($"\t\t\t{destCoord}.xy = clamp({destCoord}.xy / 2.0f, vec2(-1.0f, -1.0f), vec2(1.0f, 1.0f));");
+				stream.AppendLine("\t}"); // End of false-scope block.
             }
 
             // Append the tail end of our shader file.
