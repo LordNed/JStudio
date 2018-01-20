@@ -198,8 +198,10 @@ namespace JStudio.J3D
                 for (int i = 0; i < 10; i++)
                 {
                     var val = reader.ReadInt16();
-                    if (val >= 0)
-                        texMatrixList.Add(ReadEntry(reader, ReadTexMatrix, chunkStart, offsets, 13, val, 100));
+					if (val >= 0)
+						texMatrixList.Add(ReadEntry(reader, ReadTexMatrix, chunkStart, offsets, 13, val, 100));
+					else
+						texMatrixList.Add(new TexMatrix());
                 }
                 material.TexMatrixIndexes = texMatrixList.ToArray();
 
