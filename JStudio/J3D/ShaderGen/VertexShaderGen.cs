@@ -291,13 +291,23 @@ namespace JStudio.J3D.ShaderGen
 				for(int k = 0; k < mat.PostTexMatrixIndexes.Length; k++)
                 {
                     Console.WriteLine("PostMtx transforms are... not really anything supported?");
-                    TexMatrix postTexMtx = mat.PostTexMatrixIndexes[k];
-
-					int postIndex = ((int)mat.PostTexGenInfoIndexes[k].TexMatrixSource - 30) / 3;
+					// TexMatrix postTexMtx = mat.PostTexMatrixIndexes[k];
+					int postMatrixIndex = 0;
+					if(k < mat.PostTexGenInfoIndexes.Length)
+					{
+						postMatrixIndex = ((int)mat.PostTexGenInfoIndexes[k].TexMatrixSource - 30) / 3;
+					}
+					else if (k < mat.TexGenInfoIndexes.Length)
+					{
+						// A lot of models seem to specify a PostTexMatrix but then doesn't load any PostTexGens, so in this case
+						// we're going to try and asssume they fall back to the normal texgens? Failing that it'll just use the first one and get confused :)
+						postMatrixIndex = ((int)mat.TexGenInfoIndexes[k].TexMatrixSource - 30) / 3;
+					}
+					
 					// This should be using float4 I_POSTTRANSFORMMATRICES[64]
-                    stream.AppendFormat($"float4 P0 = PostMtx[{postIndex}];\n");
-                    stream.AppendFormat($"float4 P1 = PostMtx[{postIndex+1}];\n");
-					stream.AppendFormat($"float4 P2 = PostMtx[{postIndex + 2}];\n");
+                    stream.AppendFormat($"\t\tvec4 P0 = PostMtx[{postMatrixIndex}][0];\n");
+                    stream.AppendFormat($"\t\tvec4 P1 = PostMtx[{postMatrixIndex}][1];\n");
+					stream.AppendFormat($"\t\tvec4 P2 = PostMtx[{postMatrixIndex}][2];\n");
 
 					// Normalization support?
 					// $"{destCoord}.xyz = normalize({destCoord}.xyz);

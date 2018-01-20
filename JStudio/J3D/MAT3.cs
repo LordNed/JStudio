@@ -189,8 +189,10 @@ namespace JStudio.J3D
                 for (int i = 0; i < 8; i++)
                 {
                     var val = reader.ReadInt16();
-                    if (val >= 0)
-                        postTexGenInfoList.Add(ReadEntry(reader, ReadTexCoordGen, chunkStart, offsets, 12, val, 4));
+					if (val >= 0)
+						postTexGenInfoList.Add(ReadEntry(reader, ReadTexCoordGen, chunkStart, offsets, 12, val, 4));
+					else
+						postTexGenInfoList.Add(new TexCoordGen());
                 }
                 material.PostTexGenInfoIndexes = postTexGenInfoList.ToArray();
 
@@ -209,8 +211,15 @@ namespace JStudio.J3D
                 for (int i = 0; i < 20; i++)
                 {
                     var val = reader.ReadInt16();
-                    if (val >= 0)
-                        postTexMatrixList.Add(ReadEntry(reader, ReadTexMatrix, chunkStart, offsets, 14, val, 100));
+					if (val >= 0)
+					{
+						var entry = ReadEntry(reader, ReadTexMatrix, chunkStart, offsets, 14, val, 100);
+
+						// Models seem to specify that they have post tex matrices, but then don't have an offset with any post tex matrices.
+						// this prevents us from inserting a null entry that then tries to get used.
+						if (entry != null)
+							postTexMatrixList.Add(entry);
+					}
                 }
                 material.PostTexMatrixIndexes = postTexMatrixList.ToArray();
 

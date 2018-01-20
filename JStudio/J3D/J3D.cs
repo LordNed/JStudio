@@ -761,6 +761,20 @@ namespace JStudio.J3D
                 }
             }
 
+			if(shader.UniformPostTexMtx >= 0)
+			{
+				for(int i = 0; i < material.PostTexMatrixIndexes.Length; i++)
+				{
+					Matrix4 matrix = material.PostTexMatrixIndexes[i].TexMtx;
+
+					string matrixString = string.Format("PostMtx[{0}]", i);
+					int matrixUniformLoc = GL.GetUniformLocation(shader.Program, matrixString);
+					matrix.Transpose();
+
+					GL.UniformMatrix4(matrixUniformLoc, false, ref matrix);
+				}
+			}
+
             var color0Amb = material.AmbientColorIndexes[0];
             var color0Mat = material.MaterialColorIndexes[0];
             var color1Amb = material.AmbientColorIndexes[1];

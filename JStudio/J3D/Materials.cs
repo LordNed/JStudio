@@ -484,6 +484,13 @@ namespace JStudio.J3D
         public GXTexGenSrc Source;
         /// <summary> Texture Matrix Index </summary>
         public GXTexMatrix TexMatrixSource;
+		
+		public TexCoordGen()
+		{
+			Type = GXTexGenType.Matrix3x4;
+			Source = GXTexGenSrc.TexCoord0;
+			TexMatrixSource = GXTexMatrix.TexMtx0;
+		}
     }
 
     public enum TexMatrixProjection
