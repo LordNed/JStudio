@@ -534,7 +534,7 @@ namespace JStudio.J3D
                 m_currentRegisterAnimation.ApplyAnimationToMaterials(MAT3Tag, m_tevColorOverrides);
         }
 
-        public void Render(Matrix4 viewMatrix, Matrix4 projectionMatrix, Matrix4 modelMatrix)
+        public void Render(Matrix4 viewMatrix, Matrix4 projectionMatrix, Matrix4 modelMatrix, bool bRenderOpaque = true, bool bRenderTranslucent = true)
         {
             m_viewMatrix = viewMatrix;
             m_projMatrix = projectionMatrix;
@@ -634,7 +634,7 @@ namespace JStudio.J3D
 
             m_shapeIndex = WMath.Clamp(m_shapeIndex, 0, SHP1Tag.ShapeCount - 1);
 
-            RenderMeshRecursive(INF1Tag.HierarchyRoot);
+            RenderMeshRecursive(INF1Tag.HierarchyRoot, bRenderOpaque, bRenderTranslucent);
 
             // We're going to restore some semblance of state after rendering ourselves, as models often modify weird and arbitrary GX values.
             GL.Enable(EnableCap.Blend);
@@ -678,7 +678,7 @@ namespace JStudio.J3D
 
         private int m_shapeIndex;
 
-        private void RenderMeshRecursive(HierarchyNode curNode)
+        private void RenderMeshRecursive(HierarchyNode curNode, bool bRenderOpaque, bool bRenderTranslucent)
         {
             switch (curNode.Type)
             {
@@ -687,14 +687,19 @@ namespace JStudio.J3D
                     break;
 
                 case HierarchyDataType.Batch:
-                    //if (curNode.Value != m_shapeIndex) break;
-                    //if (curNode.Value != 0) break;
-                    RenderBatchByIndex(curNode.Value);
-                    break;
+					if(m_currentBoundMat.IsTranslucent && bRenderTranslucent)
+					{
+						RenderBatchByIndex(curNode.Value);
+					}
+					if(!m_currentBoundMat.IsTranslucent && bRenderOpaque)
+					{
+						RenderBatchByIndex(curNode.Value);
+					}
+					break;
             }
 
             foreach (var child in curNode.Children)
-                RenderMeshRecursive(child);
+                RenderMeshRecursive(child, bRenderOpaque, bRenderTranslucent);
         }
 
         private void BindMaterialByIndex(ushort index)
