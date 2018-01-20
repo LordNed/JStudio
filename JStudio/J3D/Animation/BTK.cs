@@ -31,8 +31,9 @@ namespace JStudio.J3D.Animation
         }
 
         private List<MaterialAnim> m_animationData;
+		private short[] m_remapTable;
 
-        public BTK(string name) : base(name) { }
+		public BTK(string name) : base(name) { }
 
         public void LoadFromStream(EndianBinaryReader reader)
         {
@@ -69,8 +70,10 @@ namespace JStudio.J3D.Animation
                 if (mat == null)
                     continue;
 
-                // Override the TexMatrix specified by the Material's Index which is specified by the animation hah.
-                var texMatrix = mat.TexMatrixIndexes[m_animationData[i].TexMatrixIndex];
+				// Override the TexMatrix specified by the Material's Index which is specified by the animation hah.
+				var remapIndex = m_animationData[i].TexMatrixIndex;
+				var texMatrixIndex = m_remapTable[remapIndex];
+                var texMatrix = mat.TexMatrixIndexes[texMatrixIndex];
 
                 Vector3 center = m_animationData[i].Center;
                 Vector3 scale = new Vector3(GetAnimValue(m_animationData[i].ScalesX, ftime), GetAnimValue(m_animationData[i].ScalesY, ftime), GetAnimValue(m_animationData[i].ScalesZ, ftime));
@@ -138,10 +141,10 @@ namespace JStudio.J3D.Animation
                             translationData[j] = reader.ReadSingle();
 
                         // Remap Table (probably matches MAT3's remap table?)
-                        short[] remapTable = new short[textureAnimEntryCount];
+                        m_remapTable = new short[textureAnimEntryCount];
                         reader.BaseStream.Position = tagStart + remapTableOffset;
                         for (int j = 0; j < textureAnimEntryCount; j++)
-                            remapTable[j] = reader.ReadInt16();
+							m_remapTable[j] = reader.ReadInt16();
 
                         // String Table which gives us material names.
                         reader.BaseStream.Position = tagStart + stringTableOffset;
