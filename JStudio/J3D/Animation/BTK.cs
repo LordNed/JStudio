@@ -71,8 +71,7 @@ namespace JStudio.J3D.Animation
                     continue;
 
 				// Override the TexMatrix specified by the Material's Index which is specified by the animation hah.
-				var remapIndex = m_animationData[i].TexMatrixIndex;
-				var texMatrixIndex = m_remapTable[remapIndex];
+				var texMatrixIndex = m_animationData[i].TexMatrixIndex;
                 var texMatrix = mat.TexMatrixIndexes[texMatrixIndex];
 
                 Vector3 center = m_animationData[i].Center;
