@@ -220,36 +220,28 @@ namespace JStudio.J3D.Animation
 
                 foreach (Key key in regAnim.RedChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0x3FF);
-                    key.Value = strippedValue / 1023.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.GreenChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0x3FF);
-                    key.Value = strippedValue / 1023.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.BlueChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0x3FF);
-                    key.Value = strippedValue / 1023.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.AlphaChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0x3FF);
-                    key.Value = strippedValue / 1023.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
@@ -279,36 +271,28 @@ namespace JStudio.J3D.Animation
 
                 foreach (Key key in regAnim.RedChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0xFF);
-                    key.Value = strippedValue / 255.0f;
+                    key.Value = key.Value / 65535.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.GreenChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0xFF);
-                    key.Value = strippedValue / 255.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.BlueChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0xFF);
-                    key.Value = strippedValue / 255.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
 
                 foreach (Key key in regAnim.AlphaChannel)
                 {
-                    short interValue = (short)key.Value;
-                    short strippedValue = (short)(interValue & 0xFF);
-                    key.Value = strippedValue / 255.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
