@@ -74,11 +74,23 @@ namespace JStudio.J3D.Animation
 				var texMatrixIndex = m_animationData[i].TexMatrixIndex;
                 var texMatrix = mat.TexMatrixIndexes[texMatrixIndex];
 
-                Vector3 center = m_animationData[i].Center;
                 Vector3 scale = new Vector3(GetAnimValue(m_animationData[i].ScalesX, ftime), GetAnimValue(m_animationData[i].ScalesY, ftime), GetAnimValue(m_animationData[i].ScalesZ, ftime));
                 Vector3 rot = new Vector3(GetAnimValue(m_animationData[i].RotationsX, ftime), GetAnimValue(m_animationData[i].RotationsY, ftime), GetAnimValue(m_animationData[i].RotationsZ, ftime));
                 Vector3 translation = new Vector3(GetAnimValue(m_animationData[i].TranslationsX, ftime), GetAnimValue(m_animationData[i].TranslationsY, ftime), GetAnimValue(m_animationData[i].TranslationsZ, ftime));
 
+                texMatrix.CenterS = m_animationData[i].Center.X;
+                texMatrix.CenterT = m_animationData[i].Center.Y;
+                texMatrix.CenterW = m_animationData[i].Center.Z;
+
+                texMatrix.ScaleS = scale.X;
+                texMatrix.ScaleT = scale.Y;
+
+                texMatrix.Rotation = rot.X;
+
+                texMatrix.TranslateS = translation.X;
+                texMatrix.TranslateT = translation.Y;
+
+                /*
 				Matrix4 T = Matrix4.CreateTranslation(translation);
 				Matrix4 C = Matrix4.CreateTranslation(center);
 				// ZYX order
@@ -87,9 +99,8 @@ namespace JStudio.J3D.Animation
 							Matrix4.CreateRotationX(WMath.DegreesToRadians(rot.X));
 				Matrix4 S = Matrix4.CreateScale(scale);
 
-				// texMatrix.Matrix = T * C.Inverted() * (S * C); <-- Closest so far
-				texMatrix.Matrix = T * C.Inverted() * (S * C);
-
+				texMatrix.Matrix = T * C.Inverted() * (S * C); <-- Closest so far
+				texMatrix.Matrix = T * C.Inverted() * (R * S * C);*/
 			}
         }
 

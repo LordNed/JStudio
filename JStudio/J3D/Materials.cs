@@ -518,12 +518,52 @@ namespace JStudio.J3D
             get
             {
 				Matrix4 S = Matrix4.CreateScale(ScaleS, ScaleT, 1f);
-				Matrix4 C = Matrix4.CreateTranslation(CenterS, CenterT, CenterW);
-				Matrix4 T = Matrix4.CreateTranslation(new Vector3(TranslateS, TranslateT, 0));
+                Matrix4 R = Matrix4.CreateRotationX(Rotation);
+                Matrix4 T = Matrix4.CreateTranslation(new Vector3(TranslateS, TranslateT, 0));
 
-				// Matrix * (T * C.Inverted() * (S * C)); <-- Closest so far
-				return Matrix * (T * C.Inverted() * (S * C));
+                Matrix4 C = Matrix4.CreateTranslation(CenterS, CenterT, CenterW);
+                Matrix4 invC = Matrix4.CreateTranslation(-CenterS, -CenterT, -CenterW);
+
+                S = invC * S * C;
+                R = invC * R * C;
+
+                // Matrix * (T * C.Inverted() * (S * C)); <-- Closest so far
+                var mat = Matrix * (S * R * T);
+
+                return mat;
+                //return GetTextureMatrixOld();
 			}
+        }
+
+        private Matrix4 GetTextureMatrixOld()
+        {
+            float sine = (float)Math.Sin(Rotation);
+            float cosine = (float)Math.Cos(Rotation);
+
+            Matrix4 outMat = new Matrix4();
+
+            outMat.M11 = (ScaleS * cosine);
+            outMat.M12 = (-ScaleS * sine);
+            outMat.M13 = (0.0f);
+            outMat.M14 = (TranslateS + CenterS + CenterS * -ScaleS * cosine + CenterT * ScaleS * sine);
+
+            outMat.M21 = (ScaleT * sine);
+            outMat.M22 = (ScaleT * cosine);
+            outMat.M23 = 0.0f;
+            outMat.M24 = (TranslateT + CenterT + CenterS * -ScaleT * sine - CenterT * ScaleT * cosine);
+
+            outMat.M31 = 0.0f;
+            outMat.M32 = 0.0f;
+            outMat.M33 = 1.0f;
+            outMat.M34 = 0.0f;
+
+            outMat.M41 = 0.0f;
+            outMat.M42 = 0.0f;
+            outMat.M43 = 0.0f;
+            outMat.M44 = 1.0f;
+            outMat.Transpose();
+
+            return outMat;
         }
     }
 
