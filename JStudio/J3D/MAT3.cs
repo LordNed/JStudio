@@ -134,6 +134,7 @@ namespace JStudio.J3D
                 // bmdview2 documentation says that means "draw on way down" while 4 means "draw on way up" (of INF1 heirarchy)
                 // Realistically, this just seems to imply some sort of draw order.
                 byte flag = reader.ReadByte();
+				Trace.Assert(flag == 1 || flag == 4);
 
                 // Now that we've read the contents of the material section, we can load their values into a material 
                 // class which keeps it nice and tidy and full of class references and not indexes.
