@@ -534,7 +534,8 @@ namespace JStudio.J3D
                 m_currentRegisterAnimation.ApplyAnimationToMaterials(MAT3Tag, m_tevColorOverrides);
         }
 
-        public void Render(Matrix4 viewMatrix, Matrix4 projectionMatrix, Matrix4 modelMatrix, bool bRenderOpaque = true, bool bRenderTranslucent = true)
+        public void Render(Matrix4 viewMatrix, Matrix4 projectionMatrix, Matrix4 modelMatrix, 
+			bool bRenderOpaque = true, bool bRenderTranslucent = true, bool bRenderDepthOnlyPrePass = false)
         {
             m_viewMatrix = viewMatrix;
             m_projMatrix = projectionMatrix;
@@ -634,7 +635,7 @@ namespace JStudio.J3D
 
             m_shapeIndex = WMath.Clamp(m_shapeIndex, 0, SHP1Tag.ShapeCount - 1);
 
-            RenderMeshRecursive(INF1Tag.HierarchyRoot, bRenderOpaque, bRenderTranslucent);
+            RenderMeshRecursive(INF1Tag.HierarchyRoot, bRenderOpaque, bRenderTranslucent, bRenderDepthOnlyPrePass);
 
             // We're going to restore some semblance of state after rendering ourselves, as models often modify weird and arbitrary GX values.
             GL.Enable(EnableCap.Blend);
@@ -678,12 +679,12 @@ namespace JStudio.J3D
 
         private int m_shapeIndex;
 
-        private void RenderMeshRecursive(HierarchyNode curNode, bool bRenderOpaque, bool bRenderTranslucent)
+        private void RenderMeshRecursive(HierarchyNode curNode, bool bRenderOpaque, bool bRenderTranslucent, bool bDepthOnlyPrePass)
         {
             switch (curNode.Type)
             {
                 case HierarchyDataType.Material:
-                    BindMaterialByIndex(curNode.Value);
+                    BindMaterialByIndex(curNode.Value, bDepthOnlyPrePass);
                     break;
 
                 case HierarchyDataType.Batch:
@@ -697,7 +698,7 @@ namespace JStudio.J3D
 			var reversedChildList = new List<HierarchyNode>(curNode.Children);
 			reversedChildList.Reverse();
             foreach (var child in reversedChildList)
-                RenderMeshRecursive(child, bRenderOpaque, bRenderTranslucent);
+                RenderMeshRecursive(child, bRenderOpaque, bRenderTranslucent, bDepthOnlyPrePass);
 
 			switch(curNode.Type)
 			{
@@ -710,7 +711,7 @@ namespace JStudio.J3D
 			}	
         }
 
-        private void BindMaterialByIndex(ushort index)
+        private void BindMaterialByIndex(ushort index, bool bDepthOnlyPrePass)
         {
             MAT3 mat3 = MAT3Tag;
             TEX1 tex1 = TEX1Tag;
@@ -796,10 +797,10 @@ namespace JStudio.J3D
             // Set the OpenGL State
             GXToOpenGL.SetBlendState(material.BlendModeIndex);
             GXToOpenGL.SetCullState(material.CullMode);
-            GXToOpenGL.SetDepthState(material.ZModeIndex);
+            GXToOpenGL.SetDepthState(material.ZModeIndex, bDepthOnlyPrePass);
             GXToOpenGL.SetDitherEnabled(material.DitherIndex);
 
-            // Check to see if we've overriden the material's ability to write to the color channel. This is used
+            // Check to see if we've overridden the material's ability to write to the color channel. This is used
             // to add support for bmd/bdl models who have this setting changed through game-code since the bmd/bdl
             // format does not appear to otherwise specify.
             if(m_colorWriteOverrides.ContainsKey(materialName))
@@ -807,6 +808,10 @@ namespace JStudio.J3D
                 bool enabled = m_colorWriteOverrides[materialName];
                 GL.ColorMask(enabled, enabled, enabled, true);
             }
+			else if(bDepthOnlyPrePass)
+			{
+				GL.ColorMask(false, false, false, false);
+			}
             else
             {
                 GL.ColorMask(true, true, true, true);

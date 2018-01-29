@@ -164,12 +164,12 @@ namespace JStudio.OpenGL
             }
         }
 
-        public static void SetDepthState(ZMode depthState)
+        public static void SetDepthState(ZMode depthState, bool bDepthOnlyPrePass)
         {
-            if (depthState.Enable)
-            {
-                GL.Enable(EnableCap.DepthTest);
-                GL.DepthMask(depthState.UpdateEnable);
+			if (depthState.Enable || bDepthOnlyPrePass)
+			{
+				GL.Enable(EnableCap.DepthTest);
+				GL.DepthMask(depthState.UpdateEnable || bDepthOnlyPrePass);
                 switch (depthState.Function)
                 {
                     case GXCompareType.Never: GL.DepthFunc(DepthFunction.Never); break;
