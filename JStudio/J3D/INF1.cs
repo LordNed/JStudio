@@ -86,9 +86,20 @@ namespace JStudio.J3D
 
             m_hierarchy = new HierarchyNode();
             BuildSceneGraphFromInfoNodes(ref m_hierarchy, infoNodes, 0);
+
+			// PrintHierarchy(m_hierarchy, 0);
         }
 
-        private int BuildSceneGraphFromInfoNodes(ref HierarchyNode parent, List<InfoNode> allNodes, int currentListIndex)
+		private void PrintHierarchy(HierarchyNode hierarchy, int depth)
+		{
+			for (int i = 0; i < depth; i++)
+				Console.Write("\t");
+			Console.WriteLine($"Depth: {depth} Type: {hierarchy.Type} Value: {hierarchy.Value} ChildCount: {hierarchy.Children.Count}");
+			foreach (var child in hierarchy.Children)
+				PrintHierarchy(child, depth + 1);
+		}
+
+		private int BuildSceneGraphFromInfoNodes(ref HierarchyNode parent, List<InfoNode> allNodes, int currentListIndex)
         {
             for (int i = currentListIndex; i < allNodes.Count; i++)
             {
