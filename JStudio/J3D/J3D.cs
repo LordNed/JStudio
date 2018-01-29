@@ -688,6 +688,10 @@ namespace JStudio.J3D
                     break;
 
                 case HierarchyDataType.Batch:
+                    if (m_currentBoundMat.IsTranslucent && bRenderTranslucent)
+                    {
+                        RenderBatchByIndex(curNode.Value);
+                    }
 					if(!m_currentBoundMat.IsTranslucent && bRenderOpaque)
 					{
 						RenderBatchByIndex(curNode.Value);
@@ -695,20 +699,20 @@ namespace JStudio.J3D
 					break;
             }
 
-			var reversedChildList = new List<HierarchyNode>(curNode.Children);
+            switch (curNode.Type)
+            {
+                case HierarchyDataType.Batch:
+                    if (m_currentBoundMat.IsTranslucent && bRenderTranslucent)
+                    {
+                        RenderBatchByIndex(curNode.Value);
+                    }
+                    break;
+            }
+
+            var reversedChildList = new List<HierarchyNode>(curNode.Children);
 			reversedChildList.Reverse();
             foreach (var child in reversedChildList)
                 RenderMeshRecursive(child, bRenderOpaque, bRenderTranslucent, bDepthOnlyPrePass);
-
-			switch(curNode.Type)
-			{
-				case HierarchyDataType.Batch:
-					if (m_currentBoundMat.IsTranslucent && bRenderTranslucent)
-					{
-						RenderBatchByIndex(curNode.Value);
-					}
-					break;
-			}	
         }
 
         private void BindMaterialByIndex(ushort index, bool bDepthOnlyPrePass)
