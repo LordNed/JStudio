@@ -480,7 +480,7 @@ namespace JStudio.J3D
             BoundingSphere = new FSphere(BoundingBox.Center, BoundingBox.Max.Length);
         }
 
-        private void GenerateShadersForMaterials(MAT3 mat3Tag, bool dumpShaders = false)
+        public void GenerateShadersForMaterials(MAT3 mat3Tag, bool dumpShaders = false)
         {
             foreach (var material in mat3Tag.MaterialList)
             {
@@ -501,7 +501,7 @@ namespace JStudio.J3D
             }
         }
 
-        private void AssignVertexAttributesToMaterialsRecursive(HierarchyNode curNode, ref Material curMaterial, MAT3 matTag)
+        public void AssignVertexAttributesToMaterialsRecursive(HierarchyNode curNode, ref Material curMaterial, MAT3 matTag)
         {
             switch (curNode.Type)
             {
@@ -524,10 +524,13 @@ namespace JStudio.J3D
             foreach (var regAnim in m_registerAnimations)
                 regAnim.Tick(deltaTime);
 
-            if (m_currentBoneAnimation != null)
-                m_currentBoneAnimation.ApplyAnimationToPose(JNT1Tag.AnimatedJoints);
+			if (m_currentBoneAnimation != null)
+			{
+				m_currentBoneAnimation.ApplyAnimationToPose(JNT1Tag.AnimatedJoints);
+				m_skinningInvalid = true;
+			}
 
-            if (m_currentMaterialAnimation != null)
+			if (m_currentMaterialAnimation != null)
                 m_currentMaterialAnimation.ApplyAnimationToMaterials(MAT3Tag);
 
             if (m_currentRegisterAnimation != null)
@@ -546,20 +549,28 @@ namespace JStudio.J3D
             Matrix4[] boneTransforms = new Matrix4[boneList.Count];
             ApplyBonePositionsToAnimationTransforms(boneList, boneTransforms);
 
-            // Assume that all bone animations constantly invalidate the skinning.
-            if (m_currentBoneAnimation != null)
-                m_skinningInvalid = true;
-
             // We'll only transform the position and normal vertices if skinning has been invalidated.
             if (m_skinningInvalid)
             {
                 foreach (var shape in SHP1Tag.Shapes)
                 {
-                    var transformedPositions = new List<Vector3>(shape.VertexData.Position.Count);
-                    var transformedNormals = new List<Vector3>(shape.VertexData.Normal.Count);
-                    //List<WLinearColor> colorOverride = new List<WLinearColor>();
+					// var transformedPositions = new List<Vector3>(shape.VertexData.Position.Count);
+					// var transformedNormals = new List<Vector3>(shape.VertexData.Normal.Count);
+					//List<WLinearColor> colorOverride = new List<WLinearColor>();
 
-                    for (int i = 0; i < shape.VertexData.Position.Count; i++)
+					// Ensure our override arrays are correctly allocated. We preserve the array between each iteration
+					// where possible to avoid thrashing the GC by allocating huge arrays every time we skin. We copy
+					// the old array simply because the array needs a default set for efficient assignment in the future.
+					if (shape.OverrideVertPos.Count != shape.VertexData.Position.Count)
+					{
+						shape.OverrideVertPos = new List<Vector3>(shape.VertexData.Position);
+					}
+					if (shape.OverrideNormals.Count != shape.VertexData.Normal.Count)
+					{
+						shape.OverrideNormals = new List<Vector3>(shape.VertexData.Normal);
+					}
+
+					for (int i = 0; i < shape.VertexData.Position.Count; i++)
                     {
                         // This is relative to the vertex's original packet's matrix table.  
                         ushort posMtxIndex = (ushort)(shape.VertexData.PositionMatrixIndexes[i]);
@@ -605,23 +616,24 @@ namespace JStudio.J3D
                             finalMatrix = boneTransforms[indexFromDRW1];
                         }
 
+
+
                         // Multiply the data from the model file by the finalMatrix to put it in the correct (skinned) position
-                        transformedPositions.Add(Vector3.Transform(shape.VertexData.Position[i], finalMatrix));
+                        shape.OverrideVertPos[i] = Vector3.Transform(shape.VertexData.Position[i], finalMatrix);
 
                         if (shape.VertexData.Normal.Count > 0)
                         {
-                            Vector3 transformedNormal = Vector3.TransformNormal(shape.VertexData.Normal[i], finalMatrix);
-                            transformedNormals.Add(transformedNormal);
+							shape.OverrideNormals[i] = Vector3.TransformNormal(shape.VertexData.Normal[i], finalMatrix);
                         }
 
                         //colorOverride.Add(isPartiallyWeighted ? WLinearColor.Black : WLinearColor.White);
                     }
 
                     // Re-upload to the GPU.
-                    shape.OverrideVertPos = transformedPositions;
-                    //shape.VertexData.Color0 = colorOverride;
-                    if (transformedNormals.Count > 0)
-                        shape.OverrideNormals = transformedNormals;
+                    // shape.OverrideVertPos = transformedPositions;
+                    // //shape.VertexData.Color0 = colorOverride;
+                    // if (transformedNormals.Count > 0)
+                    //     shape.OverrideNormals = transformedNormals;
                     shape.UploadBuffersToGPU(true);
                 }
 
@@ -767,10 +779,13 @@ namespace JStudio.J3D
                 {
                     Matrix4 matrix = material.TexMatrixIndexes[i].TexMtx;
                     string matrixString = string.Format("TexMtx[{0}]", i);
-                    int matrixUniformLoc = GL.GetUniformLocation(shader.Program, matrixString);
-                    matrix.Transpose();
+					if(material.TexMatrixIndexes[i].MatrixUniformLocationForGPU < 0)
+					{
+						// If the shader's broke this will try to re-assign every frame, but should vastly improve it most use cases.
+						material.TexMatrixIndexes[i].MatrixUniformLocationForGPU = GL.GetUniformLocation(shader.Program, matrixString);
+					}
 
-                    GL.UniformMatrix4(matrixUniformLoc, false, ref matrix);
+                    GL.UniformMatrix4(material.TexMatrixIndexes[i].MatrixUniformLocationForGPU, true, ref matrix);
                 }
             }
 
@@ -781,10 +796,13 @@ namespace JStudio.J3D
 					Matrix4 matrix = material.PostTexMatrixIndexes[i].TexMtx;
 
 					string matrixString = string.Format("PostMtx[{0}]", i);
-					int matrixUniformLoc = GL.GetUniformLocation(shader.Program, matrixString);
-					matrix.Transpose();
 
-					GL.UniformMatrix4(matrixUniformLoc, false, ref matrix);
+					if (material.PostTexMatrixIndexes[i].MatrixUniformLocationForGPU < 0)
+					{
+						material.PostTexMatrixIndexes[i].MatrixUniformLocationForGPU = GL.GetUniformLocation(shader.Program, matrixString);
+					}
+
+					GL.UniformMatrix4(material.PostTexMatrixIndexes[i].MatrixUniformLocationForGPU, true, ref matrix);
 				}
 			}
 

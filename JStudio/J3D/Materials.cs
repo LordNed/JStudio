@@ -513,6 +513,10 @@ namespace JStudio.J3D
         public float TranslateT;
         public Matrix4 Matrix; // Projection Matrix? blank63 has it as that. Use above fields to generate a new matrix then multiply by proj matrix?
 
+		// This is a hack to store the uniform location as reported by the GPU for rendering efficiency. We aren't assigning them to specific locations in the shader and instead querying them
+		// but querying them is slow every frame so we'll store it here. Don't @ me.
+		public int MatrixUniformLocationForGPU;
+
         public Matrix4 TexMtx
         {
             get
