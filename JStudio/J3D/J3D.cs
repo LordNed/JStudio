@@ -324,6 +324,8 @@ namespace JStudio.J3D
 
         private void ForceAnimationRestart()
         {
+            return;
+
             foreach (BCK bck in m_boneAnimations)
             {
                 bck.Stop();
@@ -480,7 +482,7 @@ namespace JStudio.J3D
             BoundingSphere = new FSphere(BoundingBox.Center, BoundingBox.Max.Length);
         }
 
-        private void GenerateShadersForMaterials(MAT3 mat3Tag, bool dumpShaders = false)
+        public void GenerateShadersForMaterials(MAT3 mat3Tag, bool dumpShaders = false)
         {
             foreach (var material in mat3Tag.MaterialList)
             {
@@ -501,7 +503,7 @@ namespace JStudio.J3D
             }
         }
 
-        private void AssignVertexAttributesToMaterialsRecursive(HierarchyNode curNode, ref Material curMaterial, MAT3 matTag)
+        public void AssignVertexAttributesToMaterialsRecursive(HierarchyNode curNode, ref Material curMaterial, MAT3 matTag)
         {
             switch (curNode.Type)
             {
