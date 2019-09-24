@@ -394,10 +394,10 @@ namespace JStudio.J3D.ShaderGen
         {
             string[] tevScale = new[]
             {
-                "* 1",      // GXTevScale::Scale_1
-                "* 2",      // GXTevScale::Scale_2
-                "* 4",      // GXTevScale::Scale_4
-                "* 0.5"     // GXTevScale::Divide_2
+                " * 1",      // GXTevScale::Scale_1
+                " * 2",      // GXTevScale::Scale_2
+                " * 4",      // GXTevScale::Scale_4
+                " * 0.5"     // GXTevScale::Divide_2
             };
 
             string[] tevBias = new[]
@@ -417,10 +417,10 @@ namespace JStudio.J3D.ShaderGen
             // Regular TEV stage: ((d + bias) + lerp(a,b,c)) *scale
             // lerp(a, b, c) op (d + bias) * scale
             //stream.AppendFormat("(mix(tevin_b.{0}, tevin_a.{0}, tevin_c.{0})", components); // lerp(a, b, c)
-            stream.AppendFormat("((tevin_a.{0} * (vec4(1,1,1,1).{0} - tevin_c.{0}) + tevin_b.{0}  * tevin_c.{0})", components);
+            stream.AppendFormat("(((tevin_a.{0} * (vec4(1,1,1,1).{0} - tevin_c.{0}) + tevin_b.{0}  * tevin_c.{0})", components);
             stream.AppendFormat(" {0} ", tevOpTable[(int)op]); // "+/-" (op)
             stream.AppendFormat("(tevin_d.{0}{1})", components, tevBias[(int)bias]); // (d + bias)
-            stream.AppendFormat("{0})", tevScale[(int)scale]);
+            stream.AppendFormat("){0})", tevScale[(int)scale]);
         }
 
         private static string[] m_tevAlphaFuncTable = new[]
