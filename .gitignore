@@ -250,3 +250,7 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+lib/GameFormatReader.dll
+lib/OpenTK.dll
+lib/WArchiveTools.dll
+lib/WCommon.dll

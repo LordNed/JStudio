@@ -28,31 +28,44 @@ namespace JStudio.J3D
 
     public class SHP1
     {
-        public class Shape : IDisposable
+        public class SkinDataTable
         {
-            public class SkinDataTable
+            public int Unknown0 { get; private set; }
+            public int FirstRelevantVertexIndex;
+            public int LastRelevantVertexIndex;
+            public List<ushort> MatrixTable { get; private set; }
+
+            public SkinDataTable(int unknown0)
             {
-                public int Unknown0 { get; private set; }
-                public int FirstRelevantVertexIndex;
-                public int LastRelevantVertexIndex;
-                public List<ushort> MatrixTable { get; private set; }
-
-                public SkinDataTable(int unknown0)
-                {
-                    Unknown0 = unknown0;
-                    MatrixTable = new List<ushort>();
-                }
+                Unknown0 = unknown0;
+                MatrixTable = new List<ushort>();
             }
+        }
 
+        public class Shape
+        {
             public byte MatrixType { get; set; }
             public float BoundingSphereDiameter { get; set; }
             public FAABox BoundingBox { get; set; }
+
+            public List<Packet> Packets { get; set; }
             public List<ShapeVertexAttribute> Attributes { get; internal set; }
+
+            public Shape()
+            {
+                Packets = new List<Packet>();
+                Attributes = new List<ShapeVertexAttribute>();
+            }
+        }
+
+        public class Packet : IDisposable
+        {
+            // To detect redundant calls
+            private bool m_hasBeenDisposed = false;
+
             public MeshVertexHolder VertexData { get; internal set; }
             public List<int> Indexes { get; internal set; }
             public VertexDescription VertexDescription { get; private set; }
-            public List<Vector3> OverrideVertPos { get; set; }
-            public List<Vector3> OverrideNormals { get; set; }
 
             // This is a list of all Matrix Table entries for all sub-primitives. 
             public List<SkinDataTable> MatrixDataTable { get; private set; }
@@ -60,18 +73,12 @@ namespace JStudio.J3D
             public int[] m_glBufferIndexes;
             public int m_glIndexBuffer;
 
-            // To detect redundant calls
-            private bool m_hasBeenDisposed = false; 
-
-            public Shape()
+            public Packet()
             {
-                Attributes = new List<ShapeVertexAttribute>();
                 VertexData = new MeshVertexHolder();
                 Indexes = new List<int>();
                 VertexDescription = new VertexDescription();
                 MatrixDataTable = new List<SkinDataTable>();
-                OverrideVertPos = new List<Vector3>();
-                OverrideNormals = new List<Vector3>();
 
                 m_glBufferIndexes = new int[15];
                 for (int i = 0; i < m_glBufferIndexes.Length; i++)
@@ -80,21 +87,15 @@ namespace JStudio.J3D
                 m_glIndexBuffer = GL.GenBuffer();
             }
 
-            public void UploadBuffersToGPU(bool onlyOverrides)
+            #region Attribute Uploading
+            public void UploadBuffersToGPU()
             {
-                List<Vector3> vertPos = OverrideVertPos.Count > 0 ? OverrideVertPos : VertexData.Position;
-                List<Vector3> vertNormal = OverrideNormals.Count > 0 ? OverrideNormals : VertexData.Normal;
-
-                if (vertPos.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.Position, vertPos.ToArray());
-                if (vertNormal.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.Normal, vertNormal.ToArray());
-
-                if (onlyOverrides)
-                    return;
-
                 // Upload the Indexes
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, m_glIndexBuffer);
                 GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(4 * Indexes.Count), Indexes.ToArray(), BufferUsageHint.StaticDraw);
 
+                if (VertexData.Position.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.Position, VertexData.Position.ToArray());
+                if (VertexData.Normal.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.Normal, VertexData.Normal.ToArray());
                 if (VertexData.Binormal.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.Binormal, VertexData.Binormal.ToArray());
                 if (VertexData.Color0.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.Color0, VertexData.Color0.ToArray());
                 if (VertexData.Color1.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.Color1, VertexData.Color1.ToArray());
@@ -109,12 +110,31 @@ namespace JStudio.J3D
                 if (VertexData.PositionMatrixIndexes.Count > 0) UpdateAttributeAndBuffers(ShaderAttributeIds.PosMtxIndex, VertexData.PositionMatrixIndexes.ToArray());
             }
 
+            private void UpdateAttributeAndBuffers<T>(ShaderAttributeIds attribute, T[] data) where T : struct
+            {
+                // See if this attribute is already enabled. If it's not already enabled, we need to generate a buffer for it.
+                if (!VertexDescription.AttributeIsEnabled(attribute))
+                {
+                    m_glBufferIndexes[(int)attribute] = GL.GenBuffer();
+                    VertexDescription.EnableAttribute(attribute);
+                }
+
+                // Bind the buffer before updating the data.
+                GL.BindBuffer(BufferTarget.ArrayBuffer, m_glBufferIndexes[(int)attribute]);
+
+                // Finally, update the data.
+                int stride = VertexDescription.GetStride(attribute);
+                GL.BufferData<T>(BufferTarget.ArrayBuffer, (IntPtr)(data.Length * stride), data, BufferUsageHint.StaticDraw);
+            }
+            #endregion
+
+            #region Rendering
             public void Bind()
             {
-                for(int i = 0; i < m_glBufferIndexes.Length; i++)
+                for (int i = 0; i < m_glBufferIndexes.Length; i++)
                 {
                     ShaderAttributeIds id = (ShaderAttributeIds)i;
-                    if(VertexDescription.AttributeIsEnabled(id))
+                    if (VertexDescription.AttributeIsEnabled(id))
                     {
                         GL.BindBuffer(BufferTarget.ArrayBuffer, m_glBufferIndexes[i]);
                         GL.EnableVertexAttribArray(i);
@@ -136,26 +156,10 @@ namespace JStudio.J3D
             {
                 GL.DrawElements(BeginMode.Triangles, Indexes.Count, DrawElementsType.UnsignedInt, 0);
             }
-
-            private void UpdateAttributeAndBuffers<T>(ShaderAttributeIds attribute, T[] data) where T : struct
-            {
-                // See if this attribute is already enabled. If it's not already enabled, we need to generate a buffer for it.
-                if (!VertexDescription.AttributeIsEnabled(attribute))
-                {
-                    m_glBufferIndexes[(int)attribute] = GL.GenBuffer();
-                    VertexDescription.EnableAttribute(attribute);
-                }
-
-                // Bind the buffer before updating the data.
-                GL.BindBuffer(BufferTarget.ArrayBuffer, m_glBufferIndexes[(int)attribute]);
-
-                // Finally, update the data.
-                int stride = VertexDescription.GetStride(attribute);
-                GL.BufferData<T>(BufferTarget.ArrayBuffer, (IntPtr)(data.Length * stride), data, BufferUsageHint.StaticDraw);
-            }
+            #endregion
 
             #region IDisposable Support
-            ~Shape()
+            ~Packet()
             {
                 // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
                 Dispose(false);
@@ -176,13 +180,10 @@ namespace JStudio.J3D
                             GL.DeleteBuffer(m_glBufferIndexes[i]);
 
                     // Set large fields to null.
-                    Attributes = null;
                     VertexData = null;
                     Indexes = null;
                     VertexDescription = null;
                     MatrixDataTable = null;
-                    OverrideVertPos = null;
-                    OverrideNormals = null;
 
                     m_hasBeenDisposed = true;
                 }
@@ -278,6 +279,8 @@ namespace JStudio.J3D
                 int numVertexRead = 0;
                 for (ushort p = 0; p < packetCount; p++)
                 {
+                    Packet pak = new Packet();
+
                     // The packets are all stored linearly and then they point to the specific size and offset of the data for this particular packet.
                     reader.BaseStream.Position = tagStart + packetLocationOffset + ((firstPacketIndex + p) * 0x8); /* 0x8 is the size of one Packet entry */
 
@@ -290,9 +293,9 @@ namespace JStudio.J3D
                     ushort matrixCount = reader.ReadUInt16();
                     uint matrixFirstIndex = reader.ReadUInt32();
 
-                    Shape.SkinDataTable matrixData = new Shape.SkinDataTable(matrixUnknown0);
-                    shape.MatrixDataTable.Add(matrixData);
-                    matrixData.FirstRelevantVertexIndex = shape.VertexData.Position.Count;
+                    SkinDataTable matrixData = new SkinDataTable(matrixUnknown0);
+                    pak.MatrixDataTable.Add(matrixData);
+                    matrixData.FirstRelevantVertexIndex = pak.VertexData.Position.Count;
 
                     // Read Matrix Table data. The Matrix Table is skinning information for the packet which indexes into the DRW1 section for more info.
                     reader.BaseStream.Position = tagStart + matrixTableOffset + (matrixFirstIndex * 0x2); /* 0x2 is the size of one Matrix Table entry */
@@ -378,37 +381,39 @@ namespace JStudio.J3D
                         var triangleList = ConvertTopologyToTriangles(type, primitiveVertices);
                         for(int i = 0; i < triangleList.Count; i++)
                         {
-                            shape.Indexes.Add(numVertexRead);
+                            pak.Indexes.Add(numVertexRead);
                             numVertexRead++;
 
                             var tri = triangleList[i];
-                            if (tri.Position >= 0) shape.VertexData.Position.Add(compressedVertexData.Position[tri.Position]);
-                            if (tri.Normal >= 0) shape.VertexData.Normal.Add(compressedVertexData.Normal[tri.Normal]);
-                            if (tri.Binormal >= 0) shape.VertexData.Binormal.Add(compressedVertexData.Binormal[tri.Binormal]);
-                            if (tri.Color0 >= 0) shape.VertexData.Color0.Add(compressedVertexData.Color0[tri.Color0]);
-                            if (tri.Color1 >= 0) shape.VertexData.Color1.Add(compressedVertexData.Color1[tri.Color1]);
-                            if (tri.Tex0 >= 0) shape.VertexData.Tex0.Add(compressedVertexData.Tex0[tri.Tex0]);
-                            if (tri.Tex1 >= 0) shape.VertexData.Tex1.Add(compressedVertexData.Tex1[tri.Tex1]);
-                            if (tri.Tex2 >= 0) shape.VertexData.Tex2.Add(compressedVertexData.Tex2[tri.Tex2]);
-                            if (tri.Tex3 >= 0) shape.VertexData.Tex3.Add(compressedVertexData.Tex3[tri.Tex3]);
-                            if (tri.Tex4 >= 0) shape.VertexData.Tex4.Add(compressedVertexData.Tex4[tri.Tex4]);
-                            if (tri.Tex5 >= 0) shape.VertexData.Tex5.Add(compressedVertexData.Tex5[tri.Tex5]);
-                            if (tri.Tex6 >= 0) shape.VertexData.Tex6.Add(compressedVertexData.Tex6[tri.Tex6]);
-                            if (tri.Tex7 >= 0) shape.VertexData.Tex7.Add(compressedVertexData.Tex7[tri.Tex7]);
+                            if (tri.Position >= 0) pak.VertexData.Position.Add(compressedVertexData.Position[tri.Position]);
+                            if (tri.Normal >= 0) pak.VertexData.Normal.Add(compressedVertexData.Normal[tri.Normal]);
+                            if (tri.Binormal >= 0) pak.VertexData.Binormal.Add(compressedVertexData.Binormal[tri.Binormal]);
+                            if (tri.Color0 >= 0) pak.VertexData.Color0.Add(compressedVertexData.Color0[tri.Color0]);
+                            if (tri.Color1 >= 0) pak.VertexData.Color1.Add(compressedVertexData.Color1[tri.Color1]);
+                            if (tri.Tex0 >= 0) pak.VertexData.Tex0.Add(compressedVertexData.Tex0[tri.Tex0]);
+                            if (tri.Tex1 >= 0) pak.VertexData.Tex1.Add(compressedVertexData.Tex1[tri.Tex1]);
+                            if (tri.Tex2 >= 0) pak.VertexData.Tex2.Add(compressedVertexData.Tex2[tri.Tex2]);
+                            if (tri.Tex3 >= 0) pak.VertexData.Tex3.Add(compressedVertexData.Tex3[tri.Tex3]);
+                            if (tri.Tex4 >= 0) pak.VertexData.Tex4.Add(compressedVertexData.Tex4[tri.Tex4]);
+                            if (tri.Tex5 >= 0) pak.VertexData.Tex5.Add(compressedVertexData.Tex5[tri.Tex5]);
+                            if (tri.Tex6 >= 0) pak.VertexData.Tex6.Add(compressedVertexData.Tex6[tri.Tex6]);
+                            if (tri.Tex7 >= 0) pak.VertexData.Tex7.Add(compressedVertexData.Tex7[tri.Tex7]);
 
                             // We pre-divide the index here just to make life simpler. For some reason the index is multiplied by three
                             // and it's not entirely clear why. Might be related to doing skinning on the GPU and offsetting the correct
                             // number of floats in a matrix?
-                            if (tri.PosMtxIndex >= 0) shape.VertexData.PositionMatrixIndexes.Add(tri.PosMtxIndex/3);
-                            else shape.VertexData.PositionMatrixIndexes.Add(0);
+                            if (tri.PosMtxIndex >= 0) pak.VertexData.PositionMatrixIndexes.Add(tri.PosMtxIndex/3);
+                            else pak.VertexData.PositionMatrixIndexes.Add(0);
                         }
                     }
 
                     // Set the last relevant vertex for this packet.
-                    matrixData.LastRelevantVertexIndex = shape.VertexData.Position.Count;
+                    matrixData.LastRelevantVertexIndex = pak.VertexData.Position.Count;
+
+                    shape.Packets.Add(pak);
                 }
 
-                shape.UploadBuffersToGPU(false);
+                //shape.UploadBuffersToGPU(false);
             }
         }
 

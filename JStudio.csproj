@@ -60,6 +60,14 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="WArchiveTools, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\WArchiveTools.dll</HintPath>
+    </Reference>
+    <Reference Include="WCommon, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>lib\WCommon.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Framework\ObjExporter.cs" />
@@ -89,14 +97,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WArchive-Tools\ArchiveToolsLib\ArchiveToolsLib.csproj">
-      <Project>{b715685d-1603-4ce3-8ea1-552b01c2ba4b}</Project>
-      <Name>ArchiveToolsLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WCommon\WCommon.csproj">
-      <Project>{e8af46cc-76dc-4541-a578-5067ead07087}</Project>
-      <Name>WCommon</Name>
-    </ProjectReference>
+    <Content Include="lib\GameFormatReader.dll" />
+    <Content Include="lib\OpenTK.dll" />
+    <Content Include="lib\WArchiveTools.dll" />
+    <Content Include="lib\WCommon.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

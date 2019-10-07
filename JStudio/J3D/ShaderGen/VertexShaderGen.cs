@@ -18,6 +18,7 @@ namespace JStudio.J3D.ShaderGen
             // Examine the attributes the mesh has so we can ensure the shader knows about the incoming data.
             // I don't think this is technically right, but meh.
             stream.AppendLine("// Per-Vertex Input");
+            if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.PosMtxIndex)) stream.AppendLine("in int RawPosMtxIndex;");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Position)) stream.AppendLine("in vec3 RawPosition;");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Normal)) stream.AppendLine("in vec3 RawNormal;");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Binormal)) stream.AppendLine("in vec3 RawNormal1;");
@@ -58,6 +59,7 @@ namespace JStudio.J3D.ShaderGen
                 "uniform mat4 ModelMtx;\n" +
                 "uniform mat4 ViewMtx;\n" +
                 "uniform mat4 ProjMtx;\n" +
+                "uniform mat4 SkinningMtxs[10];\n" +
                 "\n" +
                 "uniform mat4 TexMtx[10];\n" +
                 "uniform mat4 PostMtx[20];\n" +
@@ -87,7 +89,15 @@ namespace JStudio.J3D.ShaderGen
             stream.AppendLine("\tmat4 MV = ViewMtx * ModelMtx;");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Position))
             {
-                stream.AppendLine("\tgl_Position = MVP * vec4(RawPosition, 1);");
+                if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.PosMtxIndex))
+                {
+                    stream.AppendLine("\tgl_Position = MVP * SkinningMtxs[RawPosMtxIndex] * vec4(RawPosition, 1);");
+                }
+                else
+                {
+                    stream.AppendLine("\tgl_Position = MVP * vec4(RawPosition, 1);");
+                }
+
                 stream.AppendLine("\tvec4 worldPos = ModelMtx * vec4(RawPosition, 1);");
             }
             stream.AppendLine();

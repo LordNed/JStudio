@@ -506,7 +506,7 @@ namespace JStudio.J3D
             switch (curNode.Type)
             {
                 case HierarchyDataType.Material: curMaterial = matTag.MaterialList[matTag.MaterialRemapTable[curNode.Value]]; break;
-                case HierarchyDataType.Batch: curMaterial.VtxDesc = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[curNode.Value]].VertexDescription; break;
+                //case HierarchyDataType.Batch: curMaterial.VtxDesc = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[curNode.Value]].VertexDescription; break;
             }
 
             foreach (var child in curNode.Children)
@@ -545,107 +545,7 @@ namespace JStudio.J3D
             m_modelMatrix = modelMatrix;
 
             IList<SkeletonJoint> boneList = (m_currentBoneAnimation != null) ? JNT1Tag.AnimatedJoints : JNT1Tag.BindJoints;
-
-            Matrix4[] boneTransforms = new Matrix4[boneList.Count];
-            ApplyBonePositionsToAnimationTransforms(boneList, boneTransforms);
-
-            // We'll only transform the position and normal vertices if skinning has been invalidated.
-            if (m_skinningInvalid)
-            {
-                foreach (var shape in SHP1Tag.Shapes)
-                {
-					// var transformedPositions = new List<Vector3>(shape.VertexData.Position.Count);
-					// var transformedNormals = new List<Vector3>(shape.VertexData.Normal.Count);
-					//List<WLinearColor> colorOverride = new List<WLinearColor>();
-
-					// Ensure our override arrays are correctly allocated. We preserve the array between each iteration
-					// where possible to avoid thrashing the GC by allocating huge arrays every time we skin. We copy
-					// the old array simply because the array needs a default set for efficient assignment in the future.
-					if (shape.OverrideVertPos.Count != shape.VertexData.Position.Count)
-					{
-						shape.OverrideVertPos = new List<Vector3>(shape.VertexData.Position);
-					}
-					if (shape.OverrideNormals.Count != shape.VertexData.Normal.Count)
-					{
-						shape.OverrideNormals = new List<Vector3>(shape.VertexData.Normal);
-					}
-
-					for (int i = 0; i < shape.VertexData.Position.Count; i++)
-                    {
-                        // This is relative to the vertex's original packet's matrix table.  
-                        ushort posMtxIndex = (ushort)(shape.VertexData.PositionMatrixIndexes[i]);
-
-                        // We need to calculate which packet data table that is.
-                        int originalPacketIndex = 0;
-                        for (int p = 0; p < shape.MatrixDataTable.Count; p++)
-                        {
-                            if (i >= shape.MatrixDataTable[p].FirstRelevantVertexIndex && i < shape.MatrixDataTable[p].LastRelevantVertexIndex)
-                            {
-                                originalPacketIndex = p; break;
-                            }
-                        }
-
-                        // Now that we know which packet this vertex belongs to, we can get the index from it.
-                        // If the Matrix Table index is 0xFFFF then it means "use previous", and we have to
-                        // continue backwards until it is no longer 0xFFFF.
-                        ushort matrixTableIndex;
-                        do
-                        {
-                            matrixTableIndex = shape.MatrixDataTable[originalPacketIndex].MatrixTable[posMtxIndex];
-                            originalPacketIndex--;
-                        } while (matrixTableIndex == 0xFFFF);
-
-                        bool isPartiallyWeighted = DRW1Tag.IsPartiallyWeighted[matrixTableIndex];
-                        ushort indexFromDRW1 = DRW1Tag.TransformIndexTable[matrixTableIndex];
-
-                        Matrix4 finalMatrix = Matrix4.Zero;
-                        if (isPartiallyWeighted)
-                        {
-                            EVP1.Envelope envelope = EVP1Tag.Envelopes[indexFromDRW1];
-                            for (int b = 0; b < envelope.NumBones; b++)
-                            {
-                                Matrix4 sm1 = EVP1Tag.InverseBindPose[envelope.BoneIndexes[b]];
-                                Matrix4 sm2 = boneTransforms[envelope.BoneIndexes[b]];
-
-                                finalMatrix = finalMatrix + Matrix4.Mult(Matrix4.Mult(sm1, sm2), envelope.BoneWeights[b]);
-                            }
-                        }
-                        else
-                        {
-                            // If the vertex is not weighted then we use a 1:1 movement with the bone matrix.
-                            finalMatrix = boneTransforms[indexFromDRW1];
-                        }
-
-
-
-                        // Multiply the data from the model file by the finalMatrix to put it in the correct (skinned) position
-                        shape.OverrideVertPos[i] = Vector3.Transform(shape.VertexData.Position[i], finalMatrix);
-
-                        if (shape.VertexData.Normal.Count > 0)
-                        {
-							shape.OverrideNormals[i] = Vector3.TransformNormal(shape.VertexData.Normal[i], finalMatrix);
-                        }
-
-                        //colorOverride.Add(isPartiallyWeighted ? WLinearColor.Black : WLinearColor.White);
-                    }
-
-                    // Re-upload to the GPU.
-                    // shape.OverrideVertPos = transformedPositions;
-                    // //shape.VertexData.Color0 = colorOverride;
-                    // if (transformedNormals.Count > 0)
-                    //     shape.OverrideNormals = transformedNormals;
-                    shape.UploadBuffersToGPU(true);
-                }
-
-                m_skinningInvalid = false;
-            }
-
-            //if (WInput.GetKeyDown(System.Windows.Input.Key.O))
-            //    m_shapeIndex--;
-            //if (WInput.GetKeyUp(System.Windows.Input.Key.P))
-            //    m_shapeIndex++;
-
-            m_shapeIndex = WMath.Clamp(m_shapeIndex, 0, SHP1Tag.ShapeCount - 1);
+            DRW1Tag.UpdateMatrices(boneList, EVP1Tag);
 
             RenderMeshRecursive(INF1Tag.HierarchyRoot, bRenderOpaque, bRenderTranslucent, bRenderDepthOnlyPrePass);
 
@@ -891,9 +791,9 @@ namespace JStudio.J3D
             GL.FrontFace(FrontFaceDirection.Cw);
 
             SHP1.Shape shape = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[index]];
-            shape.Bind();
-            shape.Draw();
-            shape.Unbind();
+            //shape.Bind();
+            //shape.Draw();
+            //shape.Unbind();
         }
 
         public void DrawBoundsForJoints(bool boundingBox, bool boundingSphere, IDebugLineDrawer lineDrawer)
@@ -1019,9 +919,9 @@ namespace JStudio.J3D
                 // We either intersected with this shape's AABB or they have skinning data applied (and thus we can't skip it),
                 // thus, we're going to test against every (skinned!) triangle in this shape.
                 bool hitTriangle = false;
-                var vertexList = shape.OverrideVertPos.Count > 0 ? shape.OverrideVertPos : shape.VertexData.Position;
+                //var vertexList = shape.OverrideVertPos.Count > 0 ? shape.OverrideVertPos : shape.VertexData.Position;
 
-                for (int i = 0; i < shape.Indexes.Count; i += 3)
+                /*for (int i = 0; i < shape.Indexes.Count; i += 3)
                 {
                     float triHitDist;
                     hitTriangle = WMath.RayIntersectsTriangle(ray, vertexList[shape.Indexes[i]], vertexList[shape.Indexes[i + 1]], vertexList[shape.Indexes[i + 2]], true, out triHitDist);
@@ -1040,7 +940,7 @@ namespace JStudio.J3D
                             hitDistance = triHitDist;
                         rayDidHit = true;
                     }
-                }
+                }*/
             }
 
             return rayDidHit;
@@ -1070,7 +970,10 @@ namespace JStudio.J3D
                         texture.Dispose();
 
                     foreach (var shape in SHP1Tag.Shapes)
-                        shape.Dispose();
+                    {
+                        foreach (var pak in shape.Packets)
+                            pak.Dispose();
+                    }
 
                     foreach (var kvp in m_textureOverrides)
                         kvp.Value.Dispose();
