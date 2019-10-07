@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using WindEditor;
-
+using System.Runtime.InteropServices;
 namespace JStudio.J3D
 {
     public class ShapeVertexAttribute
@@ -68,22 +68,25 @@ namespace JStudio.J3D
             public VertexDescription VertexDescription { get; private set; }
 
             // This is a list of all Matrix Table entries for all sub-primitives. 
-            public List<SkinDataTable> MatrixDataTable { get; private set; }
+            public SkinDataTable MatrixDataTable { get; set; }
 
             public int[] m_glBufferIndexes;
             public int m_glIndexBuffer;
+
+            public Matrix4[] SkinningMatrices;
 
             public Packet()
             {
                 VertexData = new MeshVertexHolder();
                 Indexes = new List<int>();
                 VertexDescription = new VertexDescription();
-                MatrixDataTable = new List<SkinDataTable>();
+                MatrixDataTable = new SkinDataTable(0);
 
                 m_glBufferIndexes = new int[15];
                 for (int i = 0; i < m_glBufferIndexes.Length; i++)
                     m_glBufferIndexes[i] = -1;
 
+                SkinningMatrices = new Matrix4[10];
                 m_glIndexBuffer = GL.GenBuffer();
             }
 
@@ -129,7 +132,7 @@ namespace JStudio.J3D
             #endregion
 
             #region Rendering
-            public void Bind()
+            public void Bind(Shader bound_shader)
             {
                 for (int i = 0; i < m_glBufferIndexes.Length; i++)
                 {
@@ -138,8 +141,22 @@ namespace JStudio.J3D
                     {
                         GL.BindBuffer(BufferTarget.ArrayBuffer, m_glBufferIndexes[i]);
                         GL.EnableVertexAttribArray(i);
-                        GL.VertexAttribPointer(i, VertexDescription.GetAttributeSize(id), VertexDescription.GetAttributePointerType(id), false, VertexDescription.GetStride(id), 0);
+
+                        if (id == ShaderAttributeIds.PosMtxIndex)
+                        {
+                            GL.VertexAttribIPointer(i, VertexDescription.GetAttributeSize(id), VertexAttribIntegerType.Int, VertexDescription.GetStride(id), (IntPtr)0);
+                        }
+                        else
+                        {
+                            GL.VertexAttribPointer(i, VertexDescription.GetAttributeSize(id), VertexDescription.GetAttributePointerType(id), false, VertexDescription.GetStride(id), 0);
+                        }
                     }
+                }
+
+                for (int i = 0; i < 10; i++)
+                {
+                    int loc = GL.GetUniformLocation(bound_shader.Program, $"SkinningMtxs[{ i }]");
+                    GL.UniformMatrix4(loc, false, ref SkinningMatrices[i]);
                 }
 
                 // Bind the Element Array Buffer as well
@@ -276,9 +293,9 @@ namespace JStudio.J3D
                 shape.Attributes = attributes;
                 Shapes.Add(shape);
 
-                int numVertexRead = 0;
                 for (ushort p = 0; p < packetCount; p++)
                 {
+                    int numVertexRead = 0;
                     Packet pak = new Packet();
 
                     // The packets are all stored linearly and then they point to the specific size and offset of the data for this particular packet.
@@ -294,7 +311,7 @@ namespace JStudio.J3D
                     uint matrixFirstIndex = reader.ReadUInt32();
 
                     SkinDataTable matrixData = new SkinDataTable(matrixUnknown0);
-                    pak.MatrixDataTable.Add(matrixData);
+                    pak.MatrixDataTable = matrixData;
                     matrixData.FirstRelevantVertexIndex = pak.VertexData.Position.Count;
 
                     // Read Matrix Table data. The Matrix Table is skinning information for the packet which indexes into the DRW1 section for more info.
@@ -409,7 +426,7 @@ namespace JStudio.J3D
 
                     // Set the last relevant vertex for this packet.
                     matrixData.LastRelevantVertexIndex = pak.VertexData.Position.Count;
-
+                    pak.UploadBuffersToGPU();
                     shape.Packets.Add(pak);
                 }
 

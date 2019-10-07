@@ -89,15 +89,7 @@ namespace JStudio.J3D.ShaderGen
             stream.AppendLine("\tmat4 MV = ViewMtx * ModelMtx;");
             if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.Position))
             {
-                if (mat.VtxDesc.AttributeIsEnabled(ShaderAttributeIds.PosMtxIndex))
-                {
-                    stream.AppendLine("\tgl_Position = MVP * SkinningMtxs[RawPosMtxIndex] * vec4(RawPosition, 1);");
-                }
-                else
-                {
-                    stream.AppendLine("\tgl_Position = MVP * vec4(RawPosition, 1);");
-                }
-
+                stream.AppendLine("\tgl_Position = MVP * SkinningMtxs[RawPosMtxIndex] * vec4(RawPosition, 1);");
                 stream.AppendLine("\tvec4 worldPos = ModelMtx * vec4(RawPosition, 1);");
             }
             stream.AppendLine();

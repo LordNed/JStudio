@@ -22,7 +22,7 @@ namespace JStudio.Framework
                 // We can read the Position/UV/Normal data off of the shapes here, but we don't know which
                 // material they belong to yet unless we iterate through the J3D's scene graph.
                 Obj.Object objShape = new Obj.Object();
-                objShape.Positions.AddRange(shape.VertexData.Position);
+                /*objShape.Positions.AddRange(shape.VertexData.Position);
                 objShape.Normals.AddRange(shape.VertexData.Normal);
                 objShape.TexCoords.AddRange(shape.VertexData.Tex0);
 
@@ -30,7 +30,7 @@ namespace JStudio.Framework
                 {
                     WLinearColor col = shape.VertexData.Color0[i];
                     objShape.Colors.Add(new Vector4(col.R, col.G, col.B, col.A));
-                }
+                }*/
 
                 objShape.BuildFacesFromData();
                 objObjects.Add(objShape);

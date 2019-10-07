@@ -506,7 +506,7 @@ namespace JStudio.J3D
             switch (curNode.Type)
             {
                 case HierarchyDataType.Material: curMaterial = matTag.MaterialList[matTag.MaterialRemapTable[curNode.Value]]; break;
-                //case HierarchyDataType.Batch: curMaterial.VtxDesc = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[curNode.Value]].VertexDescription; break;
+                case HierarchyDataType.Batch: curMaterial.VtxDesc = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[curNode.Value]].Packets[0].VertexDescription; break;
             }
 
             foreach (var child in curNode.Children)
@@ -546,6 +546,7 @@ namespace JStudio.J3D
 
             IList<SkeletonJoint> boneList = (m_currentBoneAnimation != null) ? JNT1Tag.AnimatedJoints : JNT1Tag.BindJoints;
             DRW1Tag.UpdateMatrices(boneList, EVP1Tag);
+            UpdatePacketMatrices();
 
             RenderMeshRecursive(INF1Tag.HierarchyRoot, bRenderOpaque, bRenderTranslucent, bRenderDepthOnlyPrePass);
 
@@ -791,9 +792,47 @@ namespace JStudio.J3D
             GL.FrontFace(FrontFaceDirection.Cw);
 
             SHP1.Shape shape = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[index]];
-            //shape.Bind();
-            //shape.Draw();
-            //shape.Unbind();
+
+            foreach (SHP1.Packet pak in shape.Packets)
+            {
+                pak.Bind(m_currentBoundMat.Shader);
+                pak.Draw();
+                pak.Unbind();
+            }
+        }
+
+        private void UpdatePacketMatrices()
+        {
+            foreach (SHP1.Shape s in SHP1Tag.Shapes)
+            {
+                for (int i = 0; i < s.Packets.Count; i++)
+                {
+                    SHP1.Packet cur_packet = s.Packets[i];
+
+                    for (int j = 0; j < cur_packet.MatrixDataTable.MatrixTable.Count; j++)
+                    {
+                        ushort cur_index = cur_packet.MatrixDataTable.MatrixTable[j];
+
+                        if (cur_index == ushort.MaxValue)
+                        {
+                            for (int k = i - 1; k > 0; k--)
+                            {
+                                ushort last_index = s.Packets[k].MatrixDataTable.MatrixTable[j];
+
+                                if (last_index != ushort.MaxValue)
+                                {
+                                    cur_packet.SkinningMatrices[j] = DRW1Tag.Matrices[last_index];
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            cur_packet.SkinningMatrices[j] = DRW1Tag.Matrices[cur_index];
+                        }
+                    }
+                }
+            }
         }
 
         public void DrawBoundsForJoints(bool boundingBox, bool boundingSphere, IDebugLineDrawer lineDrawer)
