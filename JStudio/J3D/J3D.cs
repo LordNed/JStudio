@@ -941,28 +941,39 @@ namespace JStudio.J3D
                 // We either intersected with this shape's AABB or they have skinning data applied (and thus we can't skip it),
                 // thus, we're going to test against every (skinned!) triangle in this shape.
                 bool hitTriangle = false;
-                //var vertexList = shape.OverrideVertPos.Count > 0 ? shape.OverrideVertPos : shape.VertexData.Position;
 
-                /*for (int i = 0; i < shape.Indexes.Count; i += 3)
+                foreach (SHP1.Packet pak in shape.Packets)
                 {
-                    float triHitDist;
-                    hitTriangle = WMath.RayIntersectsTriangle(ray, vertexList[shape.Indexes[i]], vertexList[shape.Indexes[i + 1]], vertexList[shape.Indexes[i + 2]], true, out triHitDist);
+                    List<Vector3> vertexList = new List<Vector3>();
 
-                    // If we hit this triangle and we're OK to just return the first hit on the model, then we can early out.
-                    if (hitTriangle && returnFirstHit)
+                    for (int i = 0; i < pak.Indexes.Count; i++)
                     {
-                        hitDistance = triHitDist;
-                        return true;
+                        Matrix4 cur_mat = DRW1Tag.Matrices[pak.MatrixDataTable.MatrixTable[pak.VertexData.PositionMatrixIndexes[i]]];
+                        vertexList.Add(Vector3.Transform(pak.VertexData.Position[i], cur_mat));
                     }
 
-                    // Otherwise, we need to test to see if this hit is closer than the previous hit.
-                    if (hitTriangle)
+                    for (int i = 0; i < pak.Indexes.Count; i += 3)
                     {
-                        if (triHitDist < hitDistance)
+                        float triHitDist;
+                        hitTriangle = WMath.RayIntersectsTriangle(ray, vertexList[pak.Indexes[i]], vertexList[pak.Indexes[i + 1]], vertexList[pak.Indexes[i + 2]], true, out triHitDist);
+
+                        // If we hit this triangle and we're OK to just return the first hit on the model, then we can early out.
+                        if (hitTriangle && returnFirstHit)
+                        {
                             hitDistance = triHitDist;
-                        rayDidHit = true;
+                            Console.WriteLine($"{Name}:{hitDistance}");
+                            return true;
+                        }
+
+                        // Otherwise, we need to test to see if this hit is closer than the previous hit.
+                        if (hitTriangle)
+                        {
+                            if (triHitDist < hitDistance)
+                                hitDistance = triHitDist;
+                            rayDidHit = true;
+                        }
                     }
-                }*/
+                }
             }
 
             return rayDidHit;
