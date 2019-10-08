@@ -52,7 +52,7 @@ namespace JStudio.J3D.Animation
 
                 foreach (var materal in pose.MaterialList)
                 {
-                    if (materal.Name == m_colorStringTable.Strings[m_colorRemapTable[i]].String)
+                    if (materal.Name == m_colorStringTable.Strings[i].String)
                     {
                         mat = materal;
                         break;
@@ -77,7 +77,7 @@ namespace JStudio.J3D.Animation
 
                 foreach (var materal in pose.MaterialList)
                 {
-                    if (materal.Name == m_konstStringTable.Strings[m_konstRemapTable[i]].String)
+                    if (materal.Name == m_konstStringTable.Strings[i].String)
                     {
                         mat = materal;
                         break;

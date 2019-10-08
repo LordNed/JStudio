@@ -515,7 +515,7 @@ namespace JStudio.J3D
 
 		// This is a hack to store the uniform location as reported by the GPU for rendering efficiency. We aren't assigning them to specific locations in the shader and instead querying them
 		// but querying them is slow every frame so we'll store it here. Don't @ me.
-		public int MatrixUniformLocationForGPU;
+		public int MatrixUniformLocationForGPU = -1;
 
         public Matrix4 TexMtx
         {

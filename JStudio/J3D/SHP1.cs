@@ -429,8 +429,41 @@ namespace JStudio.J3D
                     pak.UploadBuffersToGPU();
                     shape.Packets.Add(pak);
                 }
+            }
 
-                //shape.UploadBuffersToGPU(false);
+            FixPacketSkinningIndices();
+        }
+
+        /// <summary>
+        /// Replaces skinning indices of 65535 (ushort.max) with the proper indices from previous packets.
+        /// </summary>
+        private void FixPacketSkinningIndices()
+        {
+            foreach (Shape s in Shapes)
+            {
+                for (int i = 0; i < s.Packets.Count; i++)
+                {
+                    SHP1.Packet cur_packet = s.Packets[i];
+
+                    for (int j = 0; j < cur_packet.MatrixDataTable.MatrixTable.Count; j++)
+                    {
+                        ushort cur_index = cur_packet.MatrixDataTable.MatrixTable[j];
+
+                        if (cur_index == ushort.MaxValue)
+                        {
+                            for (int k = i - 1; k > -1; k--)
+                            {
+                                ushort last_index = s.Packets[k].MatrixDataTable.MatrixTable[j];
+
+                                if (last_index != ushort.MaxValue)
+                                {
+                                    cur_packet.MatrixDataTable.MatrixTable[j] = last_index;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

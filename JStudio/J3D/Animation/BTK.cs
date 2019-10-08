@@ -85,7 +85,7 @@ namespace JStudio.J3D.Animation
                 texMatrix.ScaleS = scale.X;
                 texMatrix.ScaleT = scale.Y;
 
-                texMatrix.Rotation = rot.X;
+                texMatrix.Rotation = rot.Z;
 
                 texMatrix.TranslateS = translation.X;
                 texMatrix.TranslateT = translation.Y;

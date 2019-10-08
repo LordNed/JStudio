@@ -98,13 +98,10 @@ namespace JStudio.J3D
 
             /* MATERIAL REMAP TABLE (See start of Material loader below) */
             MaterialRemapTable = new List<short>();
-            int highestMaterialCount = 0;
 
             for (int i = 0; i < materialCount; i++)
             {
                 var val = ReadEntry(reader, ReadShort, chunkStart, offsets, 1, i, 2);
-                if (val >= highestMaterialCount)
-                    highestMaterialCount = val + 1;
                 MaterialRemapTable.Add(val);
             }
 
@@ -125,10 +122,10 @@ namespace JStudio.J3D
             for (int i = 0; i < numRemapEntries; i++)
                 TextureRemapTable.Add(ReadEntry(reader, ReadShort, chunkStart, offsets, 15, i, 2));
 
-            for (int m = 0; m < highestMaterialCount; m++)
+            for (int m = 0; m < materialCount; m++)
             {
                 // A Material entry is 0x14c long.
-                reader.BaseStream.Position = chunkStart + offsets[0] + (m * 0x14c);
+                reader.BaseStream.Position = chunkStart + offsets[0] + (MaterialRemapTable[m] * 0x14c);
 
                 // The first byte of a material is some form of flag. Values found so far are 1, 4. 1 is the most common.
                 // bmdview2 documentation says that means "draw on way down" while 4 means "draw on way up" (of INF1 heirarchy)

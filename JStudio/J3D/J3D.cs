@@ -505,7 +505,7 @@ namespace JStudio.J3D
         {
             switch (curNode.Type)
             {
-                case HierarchyDataType.Material: curMaterial = matTag.MaterialList[matTag.MaterialRemapTable[curNode.Value]]; break;
+                case HierarchyDataType.Material: curMaterial = matTag.MaterialList[curNode.Value]; break;
                 case HierarchyDataType.Batch: curMaterial.VtxDesc = SHP1Tag.Shapes[SHP1Tag.ShapeRemapTable[curNode.Value]].Packets[0].VertexDescription; break;
             }
 
@@ -646,7 +646,7 @@ namespace JStudio.J3D
             // string table.
             string materialName = mat3.MaterialNameTable[index];
 
-            Material material = mat3.MaterialList[mat3.MaterialRemapTable[index]];
+            Material material = mat3.MaterialList[index];
             material.Bind();
             m_currentBoundMat = material;
 
@@ -698,7 +698,7 @@ namespace JStudio.J3D
 
 					string matrixString = string.Format("PostMtx[{0}]", i);
 
-					if (material.PostTexMatrixIndexes[i].MatrixUniformLocationForGPU < 0)
+					if (material.PostTexMatrixIndexes[i].MatrixUniformLocationForGPU == 0)
 					{
 						material.PostTexMatrixIndexes[i].MatrixUniformLocationForGPU = GL.GetUniformLocation(shader.Program, matrixString);
 					}
@@ -812,24 +812,7 @@ namespace JStudio.J3D
                     for (int j = 0; j < cur_packet.MatrixDataTable.MatrixTable.Count; j++)
                     {
                         ushort cur_index = cur_packet.MatrixDataTable.MatrixTable[j];
-
-                        if (cur_index == ushort.MaxValue)
-                        {
-                            for (int k = i - 1; k > 0; k--)
-                            {
-                                ushort last_index = s.Packets[k].MatrixDataTable.MatrixTable[j];
-
-                                if (last_index != ushort.MaxValue)
-                                {
-                                    cur_packet.SkinningMatrices[j] = DRW1Tag.Matrices[last_index];
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            cur_packet.SkinningMatrices[j] = DRW1Tag.Matrices[cur_index];
-                        }
+                        cur_packet.SkinningMatrices[j] = DRW1Tag.Matrices[cur_index];
                     }
                 }
             }
