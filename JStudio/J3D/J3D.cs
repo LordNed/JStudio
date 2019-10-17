@@ -69,6 +69,8 @@ namespace JStudio.J3D
             set { SetRegisterAnimation(value != null ? value.Name : null); }
         }
 
+        public Dictionary<string, Matrix4> Sockets { get; private set; }
+
         // Hack
         private Matrix4 m_viewMatrix;
         private Matrix4 m_projMatrix;
@@ -100,6 +102,7 @@ namespace JStudio.J3D
         public J3D(string name)
         {
             Name = name;
+            Sockets = new Dictionary<string, Matrix4>();
         }
 
         public void LoadFromStream(EndianBinaryReader reader, bool dumpTextures = false, bool dumpShaders = false)
@@ -478,6 +481,11 @@ namespace JStudio.J3D
 
             BoundingBox = new FAABox(min, max);
             BoundingSphere = new FSphere(BoundingBox.Center, BoundingBox.Max.Length);
+
+            foreach (var jnt in JNT1Tag.BindJoints)
+            {
+                Sockets.Add(jnt.Name, Matrix4.Identity);
+            }
         }
 
         public void GenerateShadersForMaterials(MAT3 mat3Tag, bool dumpShaders = false)
@@ -524,13 +532,27 @@ namespace JStudio.J3D
             foreach (var regAnim in m_registerAnimations)
                 regAnim.Tick(deltaTime);
 
+            List<SkeletonJoint> active_list = null;
+
 			if (m_currentBoneAnimation != null)
 			{
 				m_currentBoneAnimation.ApplyAnimationToPose(JNT1Tag.AnimatedJoints);
 				m_skinningInvalid = true;
-			}
 
-			if (m_currentMaterialAnimation != null)
+                active_list = JNT1Tag.AnimatedJoints;
+            }
+            else
+            {
+                active_list = JNT1Tag.BindJoints;
+            }
+
+            foreach (var jnt in active_list)
+            {
+                jnt.UpdateTransformMatrix();
+                Sockets[jnt.Name] = jnt.TransformMatrix;
+            }
+
+            if (m_currentMaterialAnimation != null)
                 m_currentMaterialAnimation.ApplyAnimationToMaterials(MAT3Tag);
 
             if (m_currentRegisterAnimation != null)
@@ -589,8 +611,6 @@ namespace JStudio.J3D
                 }
             }
         }
-
-        private int m_shapeIndex;
 
         private void RenderMeshRecursive(HierarchyNode curNode, bool bRenderOpaque, bool bRenderTranslucent, bool bDepthOnlyPrePass)
         {

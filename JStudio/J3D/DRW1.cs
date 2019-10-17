@@ -36,7 +36,12 @@ namespace JStudio.J3D
 
         public void UpdateMatrices(IList<SkeletonJoint> bones, EVP1 envelopes)
         {
-            Matrix4[] bone_mats = GetBoneMatrices(bones);
+            Matrix4[] bone_mats = new Matrix4[bones.Count];
+
+            for (int i = 0; i < bones.Count; i++)
+            {
+                bone_mats[i] = bones[i].TransformMatrix;
+            }
 
             for (int i = 0; i < Matrices.Length; i++)
             {
@@ -50,7 +55,7 @@ namespace JStudio.J3D
                         Matrix4 sm1 = envelopes.InverseBindPose[env.BoneIndexes[j]];
                         Matrix4 sm2 = bone_mats[env.BoneIndexes[j]];
 
-                        result = result + Matrix4.Mult(Matrix4.Mult(sm1, sm2), env.BoneWeights[j]);
+                        result += Matrix4.Mult(Matrix4.Mult(sm1, sm2), env.BoneWeights[j]);
                     }
 
                     Matrices[i] = result;
@@ -60,32 +65,6 @@ namespace JStudio.J3D
                     Matrices[i] = bone_mats[TransformIndexTable[i]];
                 }
             }
-        }
-
-        private Matrix4[] GetBoneMatrices(IList<SkeletonJoint> bones)
-        {
-            Matrix4[] bone_transforms = new Matrix4[bones.Count];
-
-            for (int i = 0; i < bones.Count; i++)
-            {
-                SkeletonJoint curJoint, origJoint;
-                curJoint = origJoint = bones[i];
-
-                Matrix4 cumulativeTransform = Matrix4.Identity;
-                while (curJoint != null)
-                {
-                    Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) *
-                                          Matrix4.CreateFromQuaternion(curJoint.Rotation) *
-                                          Matrix4.CreateTranslation(curJoint.Translation);
-                    cumulativeTransform *= jointMatrix;
-
-                    curJoint = curJoint.Parent;
-                }
-
-                bone_transforms[i] = cumulativeTransform;
-            }
-
-            return bone_transforms;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace JStudio.J3D
         public Vector3 Scale { get; internal set; }
         public Quaternion Rotation { get; internal set; }
         public Vector3 Translation { get; internal set; }
+        public Matrix4 TransformMatrix { get; set; }
         public float BoundingSphereDiameter { get; internal set; }
         public FAABox BoundingBox { get; internal set; }
 
@@ -23,6 +24,24 @@ namespace JStudio.J3D
         public override string ToString()
         {
             return Name;
+        }
+
+        public void UpdateTransformMatrix()
+        {
+            SkeletonJoint curJoint = this;
+
+            Matrix4 cumulativeTransform = Matrix4.Identity;
+            while (curJoint != null)
+            {
+                Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) *
+                                      Matrix4.CreateFromQuaternion(curJoint.Rotation) *
+                                      Matrix4.CreateTranslation(curJoint.Translation);
+                cumulativeTransform *= jointMatrix;
+
+                curJoint = curJoint.Parent;
+            }
+
+            TransformMatrix = cumulativeTransform;
         }
 
         public void CopyTo(ref SkeletonJoint otherJoint)
