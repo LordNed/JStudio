@@ -432,6 +432,8 @@ namespace JStudio.J3D
             }
 
             FixPacketSkinningIndices();
+
+            RecalculateBoundingBoxes();
         }
 
         /// <summary>
@@ -464,6 +466,44 @@ namespace JStudio.J3D
                         }
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Recalculates the bounding box for any shapes that have all zero-extent bounding boxes read from the file.
+        /// This is so raycasting against these shapes works.
+        /// </summary>
+        private void RecalculateBoundingBoxes()
+        {
+            foreach (var shape in Shapes)
+            {
+                if (shape.BoundingBox.Extents != new Vector3(0.0f, 0.0f, 0.0f))
+                    continue;
+
+                Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+                Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+                foreach (var packet in shape.Packets)
+                {
+                    foreach (var pos in packet.VertexData.Position)
+                    {
+                        if (pos.X < min.X)
+                            min.X = pos.X;
+                        if (pos.X > max.X)
+                            max.X = pos.X;
+
+                        if (pos.Y < min.Y)
+                            min.Y = pos.Y;
+                        if (pos.Y > max.Y)
+                            max.Y = pos.Y;
+
+                        if (pos.Z < min.Z)
+                            min.Z = pos.Z;
+                        if (pos.Z > max.Z)
+                            max.Z = pos.Z;
+                    }
+                }
+
+                shape.BoundingBox = new FAABox(min, max);
             }
         }
 
