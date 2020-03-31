@@ -24,7 +24,7 @@ namespace JStudio.J3D
         public string Magic { get; protected set; }
         public string StudioType { get; protected set; }
         public string TotalFileSize { get { return string.Format("{0} bytes", m_totalFileSize); } }
-        public string Name { get; protected set; }
+        public string Name { get; set; }
         public FAABox BoundingBox { get; protected set; }
         public FSphere BoundingSphere { get; protected set; }
 
