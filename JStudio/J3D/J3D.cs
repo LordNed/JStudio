@@ -252,8 +252,6 @@ namespace JStudio.J3D
 
             // The setter for CurrentBoneAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentBoneAnimation");
-
-            ForceAnimationRestart();
         }
 
         public void SetMaterialAnimation(string animName)
@@ -278,8 +276,6 @@ namespace JStudio.J3D
 
             // The setter for CurrentMaterialAnimation calls this function, so broadcast the event here, instead of inside the setter.
             OnPropertyChanged("CurrentMaterialAnimation");
-
-            ForceAnimationRestart();
         }
 
         public void SetRegisterAnimation(string animName)
@@ -303,8 +299,6 @@ namespace JStudio.J3D
                 m_currentRegisterAnimation.Start();
 
             OnPropertyChanged("CurrentRegisterAnimation");
-
-            ForceAnimationRestart();
         }
 
         public void SetExternalMaterial(string bmtName)
