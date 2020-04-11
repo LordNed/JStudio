@@ -271,7 +271,7 @@ namespace JStudio.J3D.Animation
 
                 foreach (Key key in regAnim.RedChannel)
                 {
-                    key.Value = key.Value / 65535.0f;
+                    key.Value = key.Value / 255.0f;
                     key.TangentIn = (float)key.TangentIn / 65535.0f;
                     key.TangentOut = (float)key.TangentOut / 65535.0f;
                 }
