@@ -77,6 +77,9 @@ namespace JStudio.J3D
         private Matrix4 m_modelMatrix;
         private Material m_currentBoundMat;
 
+        private Matrix4 m_offsetMatrix;
+        private Matrix4 m_parentJointMatrix;
+
         private GXLight[] m_hardwareLights = new GXLight[8];
         private TevColorOverride m_tevColorOverrides;
         private int m_hardwareLightBuffer;
@@ -96,6 +99,8 @@ namespace JStudio.J3D
         private bool m_skinningInvalid;
         private int m_totalFileSize;
 
+        private Dictionary<J3D, string> m_childModels;
+
         // To detect redundant calls
         private bool m_hasBeenDisposed = false;
 
@@ -103,6 +108,9 @@ namespace JStudio.J3D
         {
             Name = name;
             Sockets = new Dictionary<string, Matrix4>();
+            m_childModels = new Dictionary<J3D, string>();
+            m_offsetMatrix = Matrix4.Identity;
+            m_parentJointMatrix = Matrix4.Identity;
         }
 
         public void LoadFromStream(EndianBinaryReader reader, bool dumpTextures = false, bool dumpShaders = false)
@@ -375,6 +383,11 @@ namespace JStudio.J3D
             m_colorWriteOverrides[materialName] = writesToColorBuffer;
         }
 
+        public void AddChildModel(J3D childModel, string parentBoneName)
+        {
+            m_childModels[childModel] = parentBoneName;
+        }
+
         private void LoadTagDataFromFile(EndianBinaryReader reader, int tagCount, bool dumpTextures, bool dumpShaders)
         {
             for (int i = 0; i < tagCount; i++)
@@ -551,6 +564,12 @@ namespace JStudio.J3D
 
             if (m_currentRegisterAnimation != null)
                 m_currentRegisterAnimation.ApplyAnimationToMaterials(MAT3Tag, m_tevColorOverrides);
+
+            foreach (var childModelEntry in m_childModels)
+            {
+                J3D childModel = childModelEntry.Key;
+                childModel.Tick(deltaTime);
+            }
         }
 
         public void Render(Matrix4 viewMatrix, Matrix4 projectionMatrix, Matrix4 modelMatrix, 
@@ -558,7 +577,10 @@ namespace JStudio.J3D
         {
             m_viewMatrix = viewMatrix;
             m_projMatrix = projectionMatrix;
-            m_modelMatrix = modelMatrix;
+            m_modelMatrix = Matrix4.Identity;
+            m_modelMatrix = Matrix4.Mult(m_modelMatrix, m_offsetMatrix);
+            m_modelMatrix = Matrix4.Mult(m_modelMatrix, m_parentJointMatrix);
+            m_modelMatrix = Matrix4.Mult(m_modelMatrix, modelMatrix);
 
             IList<SkeletonJoint> boneList = (m_currentBoneAnimation != null) ? JNT1Tag.AnimatedJoints : JNT1Tag.BindJoints;
             DRW1Tag.UpdateMatrices(boneList, EVP1Tag);
@@ -574,6 +596,50 @@ namespace JStudio.J3D
             GL.Enable(EnableCap.DepthTest);
             GL.DepthMask(true);
             GL.Enable(EnableCap.Dither);
+
+            foreach (var childModelEntry in m_childModels)
+            {
+                J3D childModel = childModelEntry.Key;
+                string parentBoneName = childModelEntry.Value;
+                var parentBone = boneList.First(x => x.Name == parentBoneName);
+                childModel.SetParentJoint(parentBone);
+                
+                childModel.Render(viewMatrix, projectionMatrix, modelMatrix, bRenderOpaque, bRenderTranslucent, bRenderDepthOnlyPrePass);
+            }
+        }
+
+        public void SetParentJoint(SkeletonJoint parentBone)
+        {
+            m_parentJointMatrix = parentBone.TransformMatrix;
+        }
+
+        public void SetOffset(Vector3 translation, Vector3 eulerRotationDegrees, Vector3 scale)
+        {
+            Quaternion rotation = Quaternion.FromAxisAngle(Vector3.UnitX, (float)(eulerRotationDegrees.X / 180f * Math.PI))
+                * Quaternion.FromAxisAngle(Vector3.UnitY, (float)(eulerRotationDegrees.Y / 180f * Math.PI))
+                * Quaternion.FromAxisAngle(Vector3.UnitZ, (float)(eulerRotationDegrees.Z / 180f * Math.PI));
+            m_offsetMatrix = Matrix4.CreateScale(scale) * Matrix4.CreateFromQuaternion(rotation) * Matrix4.CreateTranslation(translation);
+        }
+
+        public void SetOffsetTranslation(Vector3 translation)
+        {
+            Vector3 eulerRotationDegrees = m_offsetMatrix.ExtractRotation().ToEulerAngles();
+            Vector3 scale = m_offsetMatrix.ExtractScale();
+            SetOffset(translation, eulerRotationDegrees, scale);
+        }
+
+        public void SetOffsetRotation(Vector3 eulerRotationDegrees)
+        {
+            Vector3 translation = m_offsetMatrix.ExtractTranslation();
+            Vector3 scale = m_offsetMatrix.ExtractScale();
+            SetOffset(translation, eulerRotationDegrees, scale);
+        }
+
+        public void SetOffsetScale(Vector3 scale)
+        {
+            Vector3 translation = m_offsetMatrix.ExtractTranslation();
+            Vector3 eulerRotationDegrees = m_offsetMatrix.ExtractRotation().ToEulerAngles();
+            SetOffset(translation, eulerRotationDegrees, scale);
         }
 
         private void ApplyBonePositionsToAnimationTransforms(IList<SkeletonJoint> boneList, Matrix4[] boneTransforms)

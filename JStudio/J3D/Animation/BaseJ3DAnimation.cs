@@ -109,6 +109,11 @@ namespace JStudio.J3D.Animation
             m_isPlaying = true;
         }
 
+        public virtual void SetCurrentFrame(int frameIndex)
+        {
+            m_timeSinceStartedPlaying = frameIndex / kAnimFramerate;
+        }
+
         protected virtual float GetAnimValue(List<Key> keys, float frameTime)
         {
             if (keys.Count == 0)
