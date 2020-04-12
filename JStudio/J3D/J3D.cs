@@ -385,6 +385,8 @@ namespace JStudio.J3D
 
         public void AddChildModel(J3D childModel, string parentBoneName)
         {
+            if (parentBoneName == null)
+                throw new ArgumentException("No parent joint name specified for child model");
             m_childModels[childModel] = parentBoneName;
         }
 
@@ -999,7 +1001,7 @@ namespace JStudio.J3D
             // Raycast against the bounding box of the entire mesh first to see if we can save ourself a bunch of time.
             bool hitsAABB = WMath.RayIntersectsAABB(ray, BoundingBox.Min, BoundingBox.Max, out hitDistance);
 
-            if (!hitsAABB)
+            if (!hitsAABB && m_childModels.Count == 0)
                 return false;
 
             // Okay, they've intersected with our big bounding box, so now we'll trace against individual mesh bounding box.
@@ -1052,6 +1054,39 @@ namespace JStudio.J3D
                                 hitDistance = triHitDist;
                             rayDidHit = true;
                         }
+                    }
+                }
+            }
+
+            if (!rayDidHit)
+            {
+                foreach (var childModelEntry in m_childModels)
+                {
+                    J3D childModel = childModelEntry.Key;
+                    string parentBoneName = childModelEntry.Value;
+                    IList<SkeletonJoint> boneList = (m_currentBoneAnimation != null) ? JNT1Tag.AnimatedJoints : JNT1Tag.BindJoints;
+                    var parentBone = boneList.First(x => x.Name == parentBoneName);
+
+                    FRay childLocalRay = WMath.TransformRay(
+                        ray,
+                        parentBone.TransformMatrix.ExtractTranslation(),
+                        parentBone.TransformMatrix.ExtractScale(),
+                        parentBone.TransformMatrix.ExtractRotation().Inverted()
+                    );
+                    float childHitDistance;
+                    bool childDidHit = childModel.Raycast(childLocalRay, out childHitDistance, returnFirstHit);
+
+                    if (childDidHit && returnFirstHit)
+                    {
+                        hitDistance = childHitDistance;
+                        return true;
+                    }
+
+                    if (childDidHit)
+                    {
+                        if (childHitDistance < hitDistance)
+                            hitDistance = childHitDistance;
+                        rayDidHit = true;
                     }
                 }
             }
