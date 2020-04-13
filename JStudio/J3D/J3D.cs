@@ -155,11 +155,23 @@ namespace JStudio.J3D
         public void SetTevColorOverride(int index, WLinearColor overrideColor)
         {
             m_tevColorOverrides.SetTevColorOverride(index, overrideColor);
+
+            foreach (var childModelEntry in m_childModels)
+            {
+                J3D childModel = childModelEntry.Key;
+                childModel.SetTevColorOverride(index, overrideColor);
+            }
         }
 
         public void SetTevkColorOverride(int index, WLinearColor overrideColor)
         {
             m_tevColorOverrides.SetTevkColorOverride(index, overrideColor);
+
+            foreach (var childModelEntry in m_childModels)
+            {
+                J3D childModel = childModelEntry.Key;
+                childModel.SetTevkColorOverride(index, overrideColor);
+            }
         }
 
         public void LoadBoneAnimation(string bckFile)
