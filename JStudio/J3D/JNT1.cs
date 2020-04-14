@@ -10,7 +10,7 @@ namespace JStudio.J3D
     {
         public string Name { get; internal set; }
         public ushort Unknown1 { get; internal set; }
-        public ushort Unknown2 { get; internal set; }
+        public bool DoNotInheritParentScale { get; internal set; }
         public Vector3 Scale { get; internal set; }
         public Quaternion Rotation { get; internal set; }
         public Vector3 Translation { get; internal set; }
@@ -31,13 +31,18 @@ namespace JStudio.J3D
             SkeletonJoint curJoint = this;
 
             Matrix4 cumulativeTransform = Matrix4.Identity;
+            SkeletonJoint prevJoint = null;
             while (curJoint != null)
             {
-                Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) *
+                Vector3 scale = curJoint.Scale;
+                if (prevJoint != null && prevJoint.DoNotInheritParentScale)
+                    scale = Vector3.One;
+                Matrix4 jointMatrix = Matrix4.CreateScale(scale) *
                                       Matrix4.CreateFromQuaternion(curJoint.Rotation) *
                                       Matrix4.CreateTranslation(curJoint.Translation);
                 cumulativeTransform *= jointMatrix;
 
+                prevJoint = curJoint;
                 curJoint = curJoint.Parent;
             }
 
@@ -87,7 +92,8 @@ namespace JStudio.J3D
 
                 joint.Name = nameTable[j];
                 joint.Unknown1 = reader.ReadUInt16();
-                joint.Unknown2 = reader.ReadUInt16();
+                joint.DoNotInheritParentScale = reader.ReadByte() == 1;
+                Trace.Assert(reader.ReadByte() == 0xFF); // Padding
                 joint.Scale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
                 Vector3 eulerRot = new Vector3();

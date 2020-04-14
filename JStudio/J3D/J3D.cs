@@ -664,13 +664,18 @@ namespace JStudio.J3D
                 curJoint = origJoint = boneList[i];
 
                 Matrix4 cumulativeTransform = Matrix4.Identity;
+                SkeletonJoint prevJoint = null;
                 while (true)
                 {
-                    Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
+                    Vector3 scale = curJoint.Scale;
+                    if (prevJoint != null && prevJoint.DoNotInheritParentScale)
+                        scale = Vector3.One;
+                    Matrix4 jointMatrix = Matrix4.CreateScale(scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
                     cumulativeTransform *= jointMatrix;
                     if (curJoint.Parent == null)
                         break;
 
+                    prevJoint = curJoint;
                     curJoint = curJoint.Parent;
                 }
 
@@ -919,26 +924,30 @@ namespace JStudio.J3D
             Matrix4[] boneTransforms = new Matrix4[boneList.Count];
             ApplyBonePositionsToAnimationTransforms(boneList, boneTransforms);
 
-            for (int i = 0; i < boneTransforms.Length; i++)
+            for (int i = 0; i < boneList.Count; i++)
             {
                 SkeletonJoint curJoint, origJoint;
-                curJoint = origJoint = JNT1Tag.BindJoints[i];
+                curJoint = origJoint = boneList[i];
 
-                //Matrix4 cumulativeTransform = Matrix4.Identity;
-                //while (true)
-                //{
-                //    Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
-                //    cumulativeTransform *= jointMatrix;
-                //    if (curJoint.Parent == null)
-                //        break;
+                Matrix4 cumulativeTransform = Matrix4.Identity;
+                SkeletonJoint prevJoint = null;
+                while (true)
+                {
+                    Vector3 scale = curJoint.Scale;
+                    if (prevJoint != null && prevJoint.DoNotInheritParentScale)
+                        scale = Vector3.One;
+                    Matrix4 jointMatrix = Matrix4.CreateScale(scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
+                    cumulativeTransform *= jointMatrix;
+                    if (curJoint.Parent == null)
+                        break;
 
-                //    curJoint = curJoint.Parent;
-                //}
+                    prevJoint = curJoint;
+                    curJoint = curJoint.Parent;
+                }
 
-                //boneTransforms[i] = cumulativeTransform;
-                boneTransforms[i].Transpose();
-                Vector3 curPos = boneTransforms[i].ExtractTranslation();
-                Quaternion curRot = boneTransforms[i].ExtractRotation();
+                boneTransforms[i] = cumulativeTransform;
+                Vector3 curPos = cumulativeTransform.ExtractTranslation();
+                Quaternion curRot = cumulativeTransform.ExtractRotation();
 
                 WLinearColor jointColor = origJoint.Unknown1 == 0 ? WLinearColor.Yellow : WLinearColor.Blue;
                 if (boundingSphere)
@@ -979,31 +988,48 @@ namespace JStudio.J3D
 
         public void DrawBones(IDebugLineDrawer lineDrawer)
         {
-            Matrix4[] boneTransforms = new Matrix4[JNT1Tag.BindJoints.Count];
+            IList<SkeletonJoint> boneList = (m_currentBoneAnimation != null) ? JNT1Tag.AnimatedJoints : JNT1Tag.BindJoints;
+
+            Matrix4[] boneTransforms = new Matrix4[boneList.Count];
             Vector3 lastPos = Vector3.Zero;
 
-            for (int i = 0; i < JNT1Tag.BindJoints.Count; i++)
+            for (int i = 0; i < boneList.Count; i++)
             {
                 SkeletonJoint curJoint, origJoint;
-                curJoint = origJoint = JNT1Tag.BindJoints[i];
+                curJoint = origJoint = boneList[i];
 
                 Matrix4 cumulativeTransform = Matrix4.Identity;
+                SkeletonJoint prevJoint = null;
                 while (true)
                 {
-                    Matrix4 jointMatrix = Matrix4.CreateScale(curJoint.Scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
+                    Vector3 scale = curJoint.Scale;
+                    if (prevJoint != null && prevJoint.DoNotInheritParentScale)
+                        scale = Vector3.One;
+                    Matrix4 jointMatrix = Matrix4.CreateScale(scale) * Matrix4.CreateFromQuaternion(curJoint.Rotation) * Matrix4.CreateTranslation(curJoint.Translation);
                     cumulativeTransform *= jointMatrix;
                     if (curJoint.Parent == null)
                         break;
 
+                    prevJoint = curJoint;
                     curJoint = curJoint.Parent;
                 }
 
                 boneTransforms[i] = cumulativeTransform;
                 Vector3 curPos = cumulativeTransform.ExtractTranslation();
-                Quaternion curRot = cumulativeTransform.ExtractRotation();
 
                 WLinearColor jointColor = origJoint.Unknown1 == 0 ? WLinearColor.Yellow : WLinearColor.Blue;
-                lineDrawer.DrawLine(lastPos, curPos, jointColor, 0f, 0f);
+                if (origJoint.DoNotInheritParentScale)
+                {
+                    jointColor = WLinearColor.Red;
+                }
+
+                if (origJoint.Parent != null)
+                {
+                    int parentIndex = boneList.IndexOf(origJoint.Parent);
+                    Vector3 parentPos = boneTransforms[parentIndex].ExtractTranslation();
+                    lineDrawer.DrawLine(parentPos, curPos, jointColor, 0f, 0f);
+                }
+                lineDrawer.DrawSphere(curPos, 1f, 5, jointColor, 0f, 0f);
                 lastPos = curPos;
             }
         }
