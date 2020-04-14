@@ -514,12 +514,12 @@ namespace JStudio.J3D
             {
                 for (int v = 2; v < indexes.Count; v++)
                 {
-                    bool isEven = v % 2 != 0;
+                    bool isOdd = v % 2 != 0;
                     MeshVertexIndex[] newTri = new MeshVertexIndex[3];
 
                     newTri[0] = indexes[v - 2];
-                    newTri[1] = isEven ? indexes[v] : indexes[v - 1];
-                    newTri[2] = isEven ? indexes[v - 1] : indexes[v];
+                    newTri[1] = isOdd ? indexes[v] : indexes[v - 1];
+                    newTri[2] = isOdd ? indexes[v - 1] : indexes[v];
 
                     // Check against degenerate triangles (a triangle which shares indexes)
                     if (newTri[0] != newTri[1] && newTri[1] != newTri[2] && newTri[2] != newTri[0])
