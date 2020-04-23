@@ -1190,6 +1190,12 @@ namespace JStudio.J3D
                 m_textureOverrides = null;
                 m_externalMaterials = null;
 
+                foreach (var childModelEntry in m_childModels)
+                {
+                    J3D childModel = childModelEntry.Key;
+                    childModel.Dispose(manualDispose);
+                }
+
                 m_hasBeenDisposed = true;
             }
         }
