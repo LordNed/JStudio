@@ -610,6 +610,7 @@ namespace JStudio.J3D
             GL.Enable(EnableCap.DepthTest);
             GL.DepthMask(true);
             GL.Enable(EnableCap.Dither);
+            GL.ColorMask(true, true, true, true);
 
             foreach (var childModelEntry in m_childModels)
             {
