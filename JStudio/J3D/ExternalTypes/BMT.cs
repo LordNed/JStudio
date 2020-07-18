@@ -48,6 +48,14 @@ namespace JStudio.JStudio.J3D.ExternalTypes
             {
                 long tagStart = reader.BaseStream.Position;
 
+                if (tagStart == reader.BaseStream.Length)
+                {
+                    // A technically invalid BMT file where the tag count is larger than the actual number of tags.
+                    // Some BMT files like these are actually used, like for Bokoblins or pigs.
+                    // Stop reading at the end of the file instead of erroring out.
+                    break;
+                }
+
                 string tagName = reader.ReadString(4);
                 int tagSize = reader.ReadInt32();
 
