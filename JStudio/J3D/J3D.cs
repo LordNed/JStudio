@@ -479,10 +479,14 @@ namespace JStudio.J3D
             Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             Vector3 max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
 
+            Matrix4 rootJointMtx = Matrix4.CreateScale(JNT1Tag.BindJoints[0].Scale) *
+                                   Matrix4.CreateFromQuaternion(JNT1Tag.BindJoints[0].Rotation) *
+                                   Matrix4.CreateTranslation(JNT1Tag.BindJoints[0].Translation);
+
             foreach (var shape in SHP1Tag.Shapes)
             {
-                Vector3 sMin = shape.BoundingBox.Min;
-                Vector3 sMax = shape.BoundingBox.Max;
+                Vector3 sMin = Vector3.Transform(shape.BoundingBox.Min, rootJointMtx);
+                Vector3 sMax = Vector3.Transform(shape.BoundingBox.Max, rootJointMtx);
 
                 if (sMin.X < min.X)
                     min.X = sMin.X;
@@ -1052,7 +1056,9 @@ namespace JStudio.J3D
             {
                 if (canSkipShapeTriangles)
                 {
-                    hitsAABB = WMath.RayIntersectsAABB(ray, shape.BoundingBox.Min, shape.BoundingBox.Max, out hitDistance);
+                    var shapeBboxMin = Vector3.Transform(shape.BoundingBox.Min, JNT1Tag.BindJoints[0].TransformMatrix);
+                    var shapeBboxMax = Vector3.Transform(shape.BoundingBox.Max, JNT1Tag.BindJoints[0].TransformMatrix);
+                    hitsAABB = WMath.RayIntersectsAABB(ray, shapeBboxMin, shapeBboxMax, out hitDistance);
 
                     // If we didn't intersect with this shape, just go onto the next one.
                     if (!hitsAABB)
