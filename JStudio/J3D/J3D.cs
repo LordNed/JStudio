@@ -1041,6 +1041,9 @@ namespace JStudio.J3D
 
         public bool Raycast(FRay ray, out float hitDistance, bool returnFirstHit = false)
         {
+            // Make the ray relative to this model's offset.
+            ray = WMath.TransformRay(ray, m_offsetMatrix.ExtractTranslation(), m_offsetMatrix.ExtractScale(), m_offsetMatrix.ExtractRotation().Inverted());
+
             // Raycast against the bounding box of the entire mesh first to see if we can save ourself a bunch of time.
             bool hitsAABB = WMath.RayIntersectsAABB(ray, BoundingBox.Min, BoundingBox.Max, out hitDistance);
 
